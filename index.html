@@ -256,7 +256,7 @@
         
         let supabaseClient = null;
         try {
-            if (SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== "COLOCA_AQUI_A_TUA_ANON_KEY_PUBLICA") {
+            if (SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kbXlxeXNmbnFrenBrcGNzYmpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4MjA1NzMsImV4cCI6MjEwNzM5NjU3M30.ZYuO9_7pQF5D28mYkJpwDTJSPcTkLIb0En9bAT3HwiA") {
                 supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             }
         } catch (err) {
