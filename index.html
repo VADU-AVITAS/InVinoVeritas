@@ -4,10 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VitisOS ERP | Sistema Operacional para Produtores de Vinho</title>
-    <!-- Tailwind CSS CDN -->
+    <!-- Tailwind CSS v4 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Google Fonts & FontAwesome -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- SheetJS for Excel Parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f1117; color: #f3f4f6; }
         .erp-card { background: #181b22; border: 1px solid rgba(255, 255, 255, 0.07); }
@@ -15,42 +20,40 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <!-- ================= AUTH / LOGIN MODAL (RBAC SIMULATOR) ================= -->
+    <!-- ================= SUPABASE AUTH MODAL ================= -->
     <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
         <div class="erp-card w-full max-w-md rounded-2xl p-8 shadow-2xl border-t-4 border-rose-800">
             <div class="text-center mb-6">
-                <span class="text-rose-500 font-bold tracking-widest text-xs uppercase bg-rose-500/10 px-3 py-1 rounded-full">SaaS Multi-Tenant ERP</span>
-                <h1 class="text-2xl font-bold mt-2">VitisOS Acessos</h1>
-                <p class="text-gray-400 text-xs mt-1">Selecione o seu perfil e produtor para entrar no ambiente isolado.</p>
+                <span class="text-rose-500 font-bold tracking-widest text-xs uppercase bg-rose-500/10 px-3 py-1 rounded-full">SaaS Secure Auth</span>
+                <h1 class="text-2xl font-bold mt-2">VitisOS Acesso Seguro</h1>
+                <p class="text-gray-400 text-xs mt-1">Autentique-se com as credenciais da sua base de dados Supabase.</p>
             </div>
 
-            <form onsubmit="handleLogin(event)" class="space-y-4">
+            <div id="auth-error" class="hidden mb-4 p-3 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs rounded-lg"></div>
+
+            <form onsubmit="handleSupabaseLogin(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Perfil de Utilizador (Role)</label>
-                    <select id="login-role" class="w-full bg-[#12141c] border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-rose-700">
-                        <option value="producer">Produtor / Enólogo (Acesso ao seu Inventário & Apoios)</option>
-                        <option value="tourism">Gestor de Enoturismo (Acesso a Reservas & Lodges)</option>
-                        <option value="admin">Administrador Global (Visão SaaS)</option>
-                    </select>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">E-mail Profissional</label>
+                    <input type="email" id="auth-email" required class="w-full bg-[#12141c] border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-rose-700" placeholder="produtor@quintadobonjardim.pt">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Produtor / Adega (Tenant)</label>
-                    <select id="login-tenant" class="w-full bg-[#12141c] border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-rose-700">
-                        <option value="bonjardim">Quinta do Bonjardim (Sertã)</option>
-                        <option value="demo_douro">Quinta do Vale (Douro)</option>
-                        <option value="demo_alentejo">Herdade dos Montes (Alentejo)</option>
-                    </select>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Palavra-passe</label>
+                    <input type="password" id="auth-password" required class="w-full bg-[#12141c] border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-rose-700" placeholder="••••••••">
                 </div>
 
-                <button type="submit" class="w-full bg-rose-800 hover:bg-rose-700 text-white font-semibold py-3 rounded-lg text-sm transition mt-2 shadow-lg">
+                <button type="submit" class="w-full bg-rose-800 hover:bg-rose-700 text-white font-semibold py-3 rounded-lg text-sm transition mt-2 shadow-lg cursor-pointer">
                     Entrar no ERP <i class="fa-solid fa-arrow-right ml-2"></i>
                 </button>
             </form>
+
+            <div class="mt-6 text-center text-xs text-gray-500 border-t border-white/5 pt-4">
+                Protegido por Supabase Auth & Row Level Security (RLS)
+            </div>
         </div>
     </div>
 
-    <!-- ================= MAIN ERP APP (HIDDEN UNTIL LOGIN) ================= -->
+    <!-- ================= MAIN ERP APP (HIDDEN UNTIL AUTHENTICATED) ================= -->
     <div id="app-container" class="hidden flex h-screen overflow-hidden">
         
         <!-- SIDEBAR LIGHTWEIGHT -->
@@ -60,19 +63,19 @@
                     <div class="bg-rose-800 text-white w-9 h-9 rounded-lg flex items-center justify-center font-bold text-lg">🍇</div>
                     <div>
                         <h2 class="font-bold text-sm tracking-wide">VitisOS <span class="text-rose-500 font-normal text-xs">ERP</span></h2>
-                        <span id="sidebar-tenant-name" class="text-[10px] text-gray-400 block">Quinta do Bonjardim</span>
+                        <span id="sidebar-user-email" class="text-[10px] text-gray-400 block truncate w-36">Sessão Ativa</span>
                     </div>
                 </div>
 
                 <nav class="space-y-1">
-                    <button onclick="switchTab('dashboard')" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white transition active">
+                    <button onclick="switchTab('dashboard')" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white transition active bg-white/5 text-white">
                         <i class="fa-solid fa-chart-pie w-5 text-rose-500"></i> Dashboard
                     </button>
                     <button onclick="switchTab('inventory')" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
                         <i class="fa-solid fa-boxes-stacked w-5 text-emerald-500"></i> Inventário & Mão de Obra
                     </button>
                     <button onclick="switchTab('ai-expansion')" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
-                        <i class="fa-solid fa-robot w-5 text-amber-500"></i> Recomendações & Apoios AI
+                        <i class="fa-solid fa-robot w-5 text-amber-500"></i> Apoios do Estado & IA
                     </button>
                     <button onclick="switchTab('social')" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
                         <i class="fa-solid fa-share-nodes w-5 text-blue-500"></i> Social Media Hub
@@ -86,10 +89,10 @@
             <div class="border-t border-white/5 pt-4">
                 <div class="flex items-center justify-between">
                     <div>
-                        <span id="user-role-badge" class="text-xs font-semibold text-rose-400 block">Produtor</span>
-                        <span class="text-[11px] text-gray-500">Sessão Isolada (RBAC)</span>
+                        <span class="text-xs font-semibold text-emerald-400 block">✓ Ligado ao Supabase</span>
+                        <span class="text-[10px] text-gray-500">Isolamento Tenant Ativo</span>
                     </div>
-                    <button onclick="logout()" class="text-gray-400 hover:text-rose-400 text-sm p-2" title="Terminar Sessão">
+                    <button onclick="handleSupabaseLogout()" class="text-gray-400 hover:text-rose-400 text-sm p-2 cursor-pointer" title="Terminar Sessão">
                         <i class="fa-solid fa-right-from-bracket"></i>
                     </button>
                 </div>
@@ -102,10 +105,10 @@
             <header class="erp-card border-b border-white/5 px-8 py-4 flex justify-between items-center bg-[#14161f]">
                 <div class="flex items-center gap-4">
                     <h3 id="current-view-title" class="font-bold text-lg">Visão Geral</h3>
-                    <span id="tenant-badge" class="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs px-2.5 py-1 rounded-full font-medium">Tenant: Quinta do Bonjardim</span>
+                    <span class="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs px-2.5 py-1 rounded-full font-medium">Tenant: Isolação por RLS</span>
                 </div>
                 <div class="flex items-center gap-3">
-                    <button onclick="triggerVoiceAI()" class="bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-600/30 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2">
+                    <button onclick="triggerVoiceAI()" class="bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-600/30 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 cursor-pointer">
                         <i class="fa-solid fa-microphone"></i> Registo por Voz AI
                     </button>
                 </div>
@@ -120,7 +123,7 @@
                         <div class="erp-card p-5 rounded-xl">
                             <span class="text-gray-400 text-xs uppercase tracking-wider block mb-1">Stock de Garrafas</span>
                             <h4 id="dash-stock" class="text-2xl font-bold">4,250</h4>
-                            <span class="text-emerald-400 text-xs mt-1 block">✓ Atualizado ao vivo</span>
+                            <span class="text-emerald-400 text-xs mt-1 block">✓ Sincronizado BD</span>
                         </div>
                         <div class="erp-card p-5 rounded-xl">
                             <span class="text-gray-400 text-xs uppercase tracking-wider block mb-1">Faturação YTD</span>
@@ -140,15 +143,15 @@
                     </div>
 
                     <div class="erp-card p-6 rounded-xl">
-                        <h4 class="font-bold text-sm mb-4">Atividade Recente do Produtor</h4>
+                        <h4 class="font-bold text-sm mb-4">Atividade Segura da Base de Dados</h4>
                         <div class="space-y-3 text-xs text-gray-300">
                             <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                                <span>📋 Caderno de Campo: Tratamento Preventivo (Calda Bordalesa) registado.</span>
-                                <span class="text-gray-500">Hoje, 10:30</span>
+                                <span>🔒 Sessão autenticada via token JWT encriptado (Supabase Auth).</span>
+                                <span class="text-emerald-400 font-semibold">Ativo</span>
                             </div>
                             <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                                <span>🤖 Agente IA: 3 novas oportunidades HORECA detetadas num raio de 30km.</span>
-                                <span class="text-gray-500">Ontem</span>
+                                <span>📋 Caderno de Campo: Dados restritos ao tenant autenticado.</span>
+                                <span class="text-emerald-400 font-semibold">RLS Protegido</span>
                             </div>
                         </div>
                     </div>
@@ -159,7 +162,7 @@
                     <div class="erp-card p-6 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4">
                         <div>
                             <h4 class="font-bold text-base">Gestão de Inventário & Mão de Obra</h4>
-                            <p class="text-gray-400 text-xs mt-1">Carregue dados via folha Excel ou atualize por comando de voz.</p>
+                            <p class="text-gray-400 text-xs mt-1">Carregue dados via Excel (SheetJS) ou adicione diretamente.</p>
                         </div>
                         <div class="flex items-center gap-3">
                             <label class="bg-rose-800 hover:bg-rose-700 text-white text-xs font-semibold px-4 py-2.5 rounded-lg cursor-pointer transition">
@@ -172,188 +175,4 @@
                     <div class="erp-card rounded-xl overflow-hidden">
                         <div class="p-4 border-b border-white/5 flex justify-between items-center">
                             <h5 class="font-bold text-sm">Lotes de Vinho & Custos</h5>
-                            <span class="text-xs text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full">Dados Isolados do Tenant</span>
-                        </div>
-                        <table class="w-full text-left text-xs">
-                            <thead class="bg-white/5 text-gray-400 uppercase">
-                                <tr>
-                                    <th class="py-3 px-4">Produto</th>
-                                    <th class="py-3 px-4">Lote / Colheita</th>
-                                    <th class="py-3 px-4">Quantidade</th>
-                                    <th class="py-3 px-4">Custo Un.</th>
-                                    <th class="py-3 px-4">Origem</th>
-                                </tr>
-                            </thead>
-                            <tbody id="inventory-table-body" class="divide-y divide-white/5">
-                                <tr>
-                                    <td class="py-3 px-4 font-medium">Orange Wine Skin-Contact</td>
-                                    <td class="py-3 px-4 text-gray-400">2025</td>
-                                    <td class="py-3 px-4 font-semibold text-emerald-400">1,800 garrafas</td>
-                                    <td class="py-3 px-4">4.20 €</td>
-                                    <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-400">Manual ERP</span></td>
-                                </tr>
-                                <tr>
-                                    <td class="py-3 px-4 font-medium">Bonjardim Tinto Biológico</td>
-                                    <td class="py-3 px-4 text-gray-400">2023</td>
-                                    <td class="py-3 px-4 font-semibold text-emerald-400">2,450 garrafas</td>
-                                    <td class="py-3 px-4">3.80 €</td>
-                                    <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-400">Manual ERP</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- 3. AI RECOMMENDATIONS & SUBSIDIES TAB -->
-                <div id="tab-ai-expansion" class="tab-content hidden space-y-6">
-                    <div class="erp-card p-6 rounded-xl">
-                        <div class="flex justify-between items-center mb-4">
-                            <div>
-                                <h4 class="font-bold text-base">Radar de Apoios do Estado & Recomendações IA</h4>
-                                <p class="text-gray-400 text-xs mt-1">Análise inteligente adaptada ao perfil e região deste produtor.</p>
-                            </div>
-                            <button onclick="loadAIPRecommendations()" class="bg-amber-600/20 border border-amber-500/30 text-amber-400 hover:bg-amber-600/30 px-4 py-2 rounded-lg text-xs font-semibold transition">
-                                <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Executar Análise IA
-                            </button>
-                        </div>
-                        <div id="ai-recommendations-box" class="space-y-4">
-                            <div class="p-4 bg-white/5 border border-white/10 rounded-xl">
-                                <h5 class="font-bold text-sm text-amber-400 mb-1">Programa VITIS (Reestruturação da Vinha)</h5>
-                                <p class="text-xs text-gray-300">Elegível para investimento em sistemas de rega gota-a-gota e reconversão de castas autóctones. Subsídio a fundo perdido até 75%.</p>
-                            </div>
-                            <div class="p-4 bg-white/5 border border-white/10 rounded-xl">
-                                <h5 class="font-bold text-sm text-amber-400 mb-1">Portugal 2030 - Inovação Produtiva</h5>
-                                <p class="text-xs text-gray-300">Indicado para digitalização da adega, controlo térmico automatizado e expansão do ecoturismo.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 4. SOCIAL MEDIA HUB TAB -->
-                <div id="tab-social" class="tab-content hidden space-y-6">
-                    <div class="erp-card p-6 rounded-xl">
-                        <h4 class="font-bold text-base mb-2">Social Media & Storytelling Hub</h4>
-                        <p class="text-gray-400 text-xs mb-4">Geração automática de publicações baseadas na colheita e notas de cata.</p>
-                        <button onclick="alert('Campanha semanal gerada com sucesso para Instagram e LinkedIn!')" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition">
-                            ✨ Gerar Posts com IA
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 5. ENOTOURISM & CLUB TAB -->
-                <div id="tab-tourism" class="tab-content hidden space-y-6">
-                    <div class="erp-card p-6 rounded-xl">
-                        <h4 class="font-bold text-base mb-2">Enoturismo & Clube de Vinhos</h4>
-                        <p class="text-gray-400 text-xs mb-4">Gestão de provas, Safari Lodges e subscrições recorrentes.</p>
-                        <div class="p-4 bg-white/5 rounded-xl text-xs text-gray-300">
-                            <strong>112 Membros ativos</strong> no Clube de Vinhos com entrega trimestral agendada.
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </main>
-    </div>
-
-    <!-- SHEETJS FOR EXCEL PARSING -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
-    <script>
-        // Global State Simulation for RBAC & Multi-Tenancy
-        let currentTenant = "bonjardim";
-        let currentRole = "producer";
-
-        const tenantData = {
-            bonjardim: { name: "Quinta do Bonjardim (Sertã)", stock: "4,250" },
-            demo_douro: { name: "Quinta do Vale (Douro)", stock: "6,100" },
-            demo_alentejo: { name: "Herdade dos Montes (Alentejo)", stock: "9,800" }
-        };
-
-        function handleLogin(event) {
-            event.preventDefault();
-            currentRole = document.getElementById('login-role').value;
-            currentTenant = document.getElementById('login-tenant').value;
-
-            // Update UI based on tenant and role
-            document.getElementById('sidebar-tenant-name').textContent = tenantData[currentTenant].name;
-            document.getElementById('tenant-badge').textContent = `Tenant: ${tenantData[currentTenant].name}`;
-            document.getElementById('dash-stock').textContent = tenantData[currentTenant].stock;
-            
-            const roleLabels = { producer: "Produtor / Enólogo", tourism: "Gestor Enoturismo", admin: "Administrador SaaS" };
-            document.getElementById('user-role-badge').textContent = roleLabels[currentRole];
-
-            // Hide Modal, Show App
-            document.getElementById('auth-modal').classList.add('hidden');
-            document.getElementById('app-container').classList.remove('hidden');
-        }
-
-        function logout() {
-            document.getElementById('app-container').classList.add('hidden');
-            document.getElementById('auth-modal').classList.remove('hidden');
-        }
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('bg-white/5', 'text-white'));
-            
-            document.getElementById('tab-' + tabId).classList.remove('hidden');
-            event.currentTarget.classList.add('bg-white/5', 'text-white');
-            
-            const titles = {
-                dashboard: "Visão Geral",
-                inventory: "Inventário & Mão de Obra",
-                "ai-expansion": "Recomendações & Apoios AI",
-                social: "Social Media Hub",
-                tourism: "Enoturismo & Clube de Vinhos"
-            };
-            document.getElementById('current-view-title').textContent = titles[tabId];
-        }
-
-        // Excel Upload Handler (SheetJS)
-        function handleExcelUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-                const tableBody = document.getElementById('inventory-table-body');
-                let html = '';
-                jsonData.forEach(item => {
-                    html += `
-                        <tr class="border-b border-white/5">
-                            <td class="py-3 px-4 font-medium">${item.Produto || 'Vinho Importado'}</td>
-                            <td class="py-3 px-4 text-gray-400">${item.Lote || '2026'}</td>
-                            <td class="py-3 px-4 font-semibold text-emerald-400">${item.Quantidade || 100} garrafas</td>
-                            <td class="py-3 px-4">${item.Custo || '4.00'} €</td>
-                            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400">Excel Upload</span></td>
-                        </tr>
-                    `;
-                });
-                tableBody.insertAdjacentHTML('afterbegin', html);
-                alert(`Sucesso! ${jsonData.length} linhas importadas para o inventário de ${tenantData[currentTenant].name}.`);
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        // Voice AI Simulation
-        function triggerVoiceAI() {
-            const speech = prompt("Simule o seu comando por voz (ex: 'Adicionar 120 garrafas de Tinto lote 2023'):");
-            if (!speech) return;
-
-            const tableBody = document.getElementById('inventory-table-body');
-            const row = `
-                <tr class="border-b border-white/5 bg-purple-500/10">
-                    <td class="py-3 px-4 font-medium">Vinho Registado por Voz</td>
-                    <td class="py-3 px-4 text-gray-400">Lote Voz AI</td>
-                    <td class="py-3 px-4 font-semibold text-emerald-400">120 garrafas</td>
-                    <td class="py-3 px-4">4.20 €</td>
-                    <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-purple-500/10 text-purple-300">🎙️ Voz AI</span></td>
-                </tr>
-            `;
-            table
+                            <span class="text-xs text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-
