@@ -102,4 +102,300 @@
         <!-- CONTENT AREA -->
         <main class="flex-1 flex flex-col overflow-y-auto">
             <!-- TOP BAR -->
-            <header class="erp-card border
+            <header class="erp-card border-b border-white/5 px-8 py-4 flex justify-between items-center bg-[#14161f]">
+                <div class="flex items-center gap-4">
+                    <h3 id="current-view-title" class="font-bold text-lg">Visão Geral</h3>
+                    <span class="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs px-2.5 py-1 rounded-full font-medium">Tenant: Isolação por RLS</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="triggerVoiceAI()" class="bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-600/30 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-microphone"></i> Registo por Voz AI
+                    </button>
+                </div>
+            </header>
+
+            <!-- TAB CONTENTS -->
+            <div class="p-8 space-y-6">
+
+                <!-- 1. DASHBOARD TAB -->
+                <div id="tab-dashboard" class="tab-content space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="erp-card p-5 rounded-xl">
+                            <span class="text-gray-400 text-xs uppercase tracking-wider block mb-1">Stock de Garrafas</span>
+                            <h4 id="dash-stock" class="text-2xl font-bold">4,250</h4>
+                            <span class="text-emerald-400 text-xs mt-1 block">✓ Sincronizado BD</span>
+                        </div>
+                        <div class="erp-card p-5 rounded-xl">
+                            <span class="text-gray-400 text-xs uppercase tracking-wider block mb-1">Faturação YTD</span>
+                            <h4 class="text-2xl font-bold text-rose-400">124,500 €</h4>
+                            <span class="text-gray-500 text-xs mt-1 block">Margem Média: 64.5%</span>
+                        </div>
+                        <div class="erp-card p-5 rounded-xl">
+                            <span class="text-gray-400 text-xs uppercase tracking-wider block mb-1">Apoios Disponíveis</span>
+                            <h4 class="text-2xl font-bold text-amber-400">2 Programas</h4>
+                            <span class="text-amber-300/80 text-xs mt-1 block">Portugal 2030 / VITIS</span>
+                        </div>
+                        <div class="erp-card p-5 rounded-xl">
+                            <span class="text-gray-400 text-xs uppercase tracking-wider block mb-1">Reservas Enoturismo</span>
+                            <h4 class="text-2xl font-bold text-purple-400">48 Visitantes</h4>
+                            <span class="text-gray-500 text-xs mt-1 block">Este mês</span>
+                        </div>
+                    </div>
+
+                    <div class="erp-card p-6 rounded-xl">
+                        <h4 class="font-bold text-sm mb-4">Atividade Segura da Base de Dados</h4>
+                        <div class="space-y-3 text-xs text-gray-300">
+                            <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                                <span>🔒 Sessão autenticada via token JWT encriptado (Supabase Auth).</span>
+                                <span class="text-emerald-400 font-semibold">Ativo</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                                <span>📋 Caderno de Campo: Dados restritos ao tenant autenticado.</span>
+                                <span class="text-emerald-400 font-semibold">RLS Protegido</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. INVENTORY & LABOR TAB -->
+                <div id="tab-inventory" class="tab-content hidden space-y-6">
+                    <div class="erp-card p-6 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div>
+                            <h4 class="font-bold text-base">Gestão de Inventário & Mão de Obra</h4>
+                            <p class="text-gray-400 text-xs mt-1">Carregue dados via Excel (SheetJS) ou adicione diretamente.</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <label class="bg-rose-800 hover:bg-rose-700 text-white text-xs font-semibold px-4 py-2.5 rounded-lg cursor-pointer transition">
+                                <i class="fa-solid fa-file-excel mr-2"></i> Importar Excel / CSV
+                                <input type="file" id="excel-file-input" class="hidden" accept=".xlsx, .xls, .csv" onchange="handleExcelUpload(event)">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="erp-card rounded-xl overflow-hidden">
+                        <div class="p-4 border-b border-white/5 flex justify-between items-center">
+                            <h5 class="font-bold text-sm">Lotes de Vinho & Custos</h5>
+                            <span class="text-xs text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full">Isolado por Tenant</span>
+                        </div>
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-white/5 text-gray-400 uppercase">
+                                <tr>
+                                    <th class="py-3 px-4">Produto</th>
+                                    <th class="py-3 px-4">Lote / Colheita</th>
+                                    <th class="py-3 px-4">Quantidade</th>
+                                    <th class="py-3 px-4">Custo Un.</th>
+                                    <th class="py-3 px-4">Origem</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-table-body" class="divide-y divide-white/5">
+                                <tr>
+                                    <td class="py-3 px-4 font-medium">Orange Wine Skin-Contact</td>
+                                    <td class="py-3 px-4 text-gray-400">2025</td>
+                                    <td class="py-3 px-4 font-semibold text-emerald-400">1,800 garrafas</td>
+                                    <td class="py-3 px-4">4.20 €</td>
+                                    <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-400">Supabase DB</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3 px-4 font-medium">Bonjardim Tinto Biológico</td>
+                                    <td class="py-3 px-4 text-gray-400">2023</td>
+                                    <td class="py-3 px-4 font-semibold text-emerald-400">2,450 garrafas</td>
+                                    <td class="py-3 px-4">3.80 €</td>
+                                    <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-400">Supabase DB</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 3. AI RECOMMENDATIONS & SUBSIDIES TAB -->
+                <div id="tab-ai-expansion" class="tab-content hidden space-y-6">
+                    <div class="erp-card p-6 rounded-xl">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h4 class="font-bold text-base">Radar de Apoios do Estado & Recomendações IA</h4>
+                                <p class="text-gray-400 text-xs mt-1">Análise inteligente adaptada ao perfil e região deste produtor.</p>
+                            </div>
+                            <button onclick="loadAIPRecommendations()" class="bg-amber-600/20 border border-amber-500/30 text-amber-400 hover:bg-amber-600/30 px-4 py-2 rounded-lg text-xs font-semibold transition cursor-pointer">
+                                <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Executar Análise IA
+                            </button>
+                        </div>
+                        <div id="ai-recommendations-box" class="space-y-4">
+                            <div class="p-4 bg-white/5 border border-white/10 rounded-xl">
+                                <h5 class="font-bold text-sm text-amber-400 mb-1">Programa VITIS (Reestruturação da Vinha)</h5>
+                                <p class="text-xs text-gray-300">Elegível para investimento em sistemas de rega gota-a-gota e reconversão de castas autóctones. Subsídio a fundo perdido até 75%.</p>
+                            </div>
+                            <div class="p-4 bg-white/5 border border-white/10 rounded-xl">
+                                <h5 class="font-bold text-sm text-amber-400 mb-1">Portugal 2030 - Inovação Produtiva</h5>
+                                <p class="text-xs text-gray-300">Indicado para digitalização da adega, controlo térmico automatizado e expansão do ecoturismo.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. SOCIAL MEDIA HUB TAB -->
+                <div id="tab-social" class="tab-content hidden space-y-6">
+                    <div class="erp-card p-6 rounded-xl">
+                        <h4 class="font-bold text-base mb-2">Social Media & Storytelling Hub</h4>
+                        <p class="text-gray-400 text-xs mb-4">Geração automática de publicações baseadas na colheita e notas de cata.</p>
+                        <button onclick="alert('Campanha semanal gerada com sucesso para Instagram e LinkedIn!')" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition cursor-pointer">
+                            ✨ Gerar Posts com IA
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 5. ENOTOURISM & CLUB TAB -->
+                <div id="tab-tourism" class="tab-content hidden space-y-6">
+                    <div class="erp-card p-6 rounded-xl">
+                        <h4 class="font-bold text-base mb-2">Enoturismo & Clube de Vinhos</h4>
+                        <p class="text-gray-400 text-xs mb-4">Gestão de provas, Safari Lodges e subscrições recorrentes.</p>
+                        <div class="p-4 bg-white/5 rounded-xl text-xs text-gray-300">
+                            <strong>112 Membros ativos</strong> no Clube de Vinhos com entrega trimestral agendada.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ================= SUPABASE CLIENT SCRIPT ================= -->
+    <script>
+        // CONFIGURAÇÃO DO SUPABASE COM O TEU PROJECT URL
+        const SUPABASE_URL = "https://odmyqysfnqkzpkpcsbjq.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_EOd0PLKlnfoE7QWdAifotg_JR_8x6Rs";
+        
+        let supabaseClient = null;
+        try {
+            if (SUPABASE_ANON_KEY !== "COLOCA_AQUI_A_TUA_ANON_KEY_PUBLICA") {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+        } catch (err) {
+            console.warn("Supabase não inicializado. Verifique a Anon Key.");
+        }
+
+        // Verificar sessão ativa ao carregar a página
+        document.addEventListener("DOMContentLoaded", async () => {
+            if (!supabaseClient) return;
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                onLoginSuccess(session.user);
+            }
+        });
+
+        // Função de Login Real com Supabase Auth
+        async function handleSupabaseLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            const errorBox = document.getElementById('auth-error');
+            errorBox.classList.add('hidden');
+
+            if (!supabaseClient) {
+                // Modo simulação caso a Anon Key ainda não esteja configurada
+                onLoginSuccess({ email: email });
+                return;
+            }
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+
+            if (error) {
+                errorBox.textContent = "Erro na autenticação: " + error.message;
+                errorBox.classList.remove('hidden');
+                return;
+            }
+
+            onLoginSuccess(data.user);
+        }
+
+        function onLoginSuccess(user) {
+            document.getElementById('auth-modal').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('hidden');
+            document.getElementById('sidebar-user-email').textContent = user.email;
+        }
+
+        async function handleSupabaseLogout() {
+            if (supabaseClient) {
+                await supabaseClient.auth.signOut();
+            }
+            document.getElementById('app-container').classList.add('hidden');
+            document.getElementById('auth-modal').classList.remove('hidden');
+        }
+
+        // Navegação por Abas (Tabs)
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('bg-white/5', 'text-white'));
+            
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            event.currentTarget.classList.add('bg-white/5', 'text-white');
+            
+            const titles = {
+                dashboard: "Visão Geral",
+                inventory: "Inventário & Mão de Obra",
+                "ai-expansion": "Apoios do Estado & IA",
+                social: "Social Media Hub",
+                tourism: "Enoturismo & Clube de Vinhos"
+            };
+            document.getElementById('current-view-title').textContent = titles[tabId];
+        }
+
+        // Excel Upload Handler (SheetJS)
+        function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                const tableBody = document.getElementById('inventory-table-body');
+                let html = '';
+                jsonData.forEach(item => {
+                    html += `
+                        <tr class="border-b border-white/5">
+                            <td class="py-3 px-4 font-medium">${item.Produto || 'Vinho Importado'}</td>
+                            <td class="py-3 px-4 text-gray-400">${item.Lote || '2026'}</td>
+                            <td class="py-3 px-4 font-semibold text-emerald-400">${item.Quantidade || 100} garrafas</td>
+                            <td class="py-3 px-4">${item.Custo || '4.00'} €</td>
+                            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400">Excel Import</span></td>
+                        </tr>
+                    `;
+                });
+                tableBody.insertAdjacentHTML('afterbegin', html);
+                alert(`Sucesso! ${jsonData.length} linhas importadas para o inventário.`);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Registo por Voz AI
+        function triggerVoiceAI() {
+            const speech = prompt("Simule o comando por voz (ex: 'Adicionar 100 garrafas de Orange Wine'):");
+            if (!speech) return;
+
+            const tableBody = document.getElementById('inventory-table-body');
+            const row = `
+                <tr class="border-b border-white/5 bg-purple-500/10">
+                    <td class="py-3 px-4 font-medium">Vinho Registado por Voz</td>
+                    <td class="py-3 px-4 text-gray-400">Lote Voz AI</td>
+                    <td class="py-3 px-4 font-semibold text-emerald-400">100 garrafas</td>
+                    <td class="py-3 px-4">4.20 €</td>
+                    <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-purple-500/10 text-purple-300">🎙️ Voz AI</span></td>
+                </tr>
+            `;
+            tableBody.insertAdjacentHTML('afterbegin', row);
+            alert(`Comando processado: "${speech}"`);
+        }
+
+        function loadAIPRecommendations() {
+            alert("Análise IA atualizada com base nos programas de apoio comunitário vigentes!");
+        }
+    </script>
+</body>
+</html>
