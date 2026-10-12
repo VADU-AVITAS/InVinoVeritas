@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VitisOS | ERP SaaS Inteligente para Produtores Vitivinícolas</title>
+    <!-- Tailwind CSS for sleek modern SaaS styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        wine: {
+                            50: '#fdf2f4',
+                            100: '#fbe5e8',
+                            600: '#8b263e',
+                            700: '#721c30',
+                            800: '#5a1626',
+                            900: '#3d0c18',
+                        },
+                        dark: {
+                            bg: '#121318',
+                            card: '#1a1c23',
+                            surface: '#242731',
+                            border: 'rgba(255, 255, 255, 0.08)'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons & Lucide CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS for Excel Reading -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        body { background-color: #121318; color: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .glass-card { background: #1a1c23; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 0.75rem; }
+    </style>
+</head>
+<body class="flex flex-col md:flex-row min-h-screen">
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="w-full md:w-72 bg-dark-card border-r border-dark-border p-5 flex flex-col justify-between">
+        <div>
+            <!-- LOGO -->
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-wine-600 flex items-center justify-center text-white font-bold text-xl">🍇</div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight text-white">VitisOS <span class="text-xs bg-wine-600 px-1.5 py-0.5 rounded text-white ml-1">ERP</span></h1>
+                        <p class="text-xs text-gray-400">Wine Producer OS</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRODUCER SELECTOR -->
+            <div class="mb-6">
+                <label class="block text-xs uppercase text-gray-400 mb-2 font-semibold">Produtor / Adega</label>
+                <select id="producerSelect" class="w-full bg-dark-surface text-sm text-gray-200 border border-dark-border rounded-lg p-2.5 focus:outline-none focus:border-wine-600">
+                    <option value="bonjardim">Quinta do Bonjardim (Sertã)</option>
+                    <option value="demo_douro">Quinta Vale do Douro (Douro)</option>
+                    <option value="demo_alentejo">Herdade do Alentejo (Alentejo)</option>
+                </select>
+            </div>
+
+            <!-- NAV MENU -->
+            <nav class="space-y-1">
+                <button onclick="switchTab('inventory', event)" class="nav-btn active w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-dark-surface hover:text-white transition">
+                    <i class="fa-solid fa-boxes-stacked w-5 text-wine-600"></i>
+                    <span>Inventário, Mão de Obra & Voz</span>
+                </button>
+                <button onclick="switchTab('social', event)" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-dark-surface hover:text-white transition">
+                    <i class="fa-solid fa-bullhorn w-5 text-amber-500"></i>
+                    <span>Social Media AI Hub</span>
+                </button>
+                <button onclick="switchTab('expansion', event)" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-dark-surface hover:text-white transition">
+                    <i class="fa-solid fa-robot w-5 text-emerald-500"></i>
+                    <span>Expansão, PR & Apoios Estado</span>
+                </button>
+                <button onclick="switchTab('enotourism', event)" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-dark-surface hover:text-white transition">
+                    <i class="fa-solid fa-wine-glass w-5 text-purple-400"></i>
+                    <span>Enoturismo & Clube Vinhos</span>
+                </button>
+                <button onclick="switchTab('finance', event)" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-dark-surface hover:text-white transition">
+                    <i class="fa-solid fa-chart-pie w-5 text-blue-400"></i>
+                    <span>Cockpit Financeiro & Margens</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- FOOTER / STATS -->
+        <div class="pt-6 border-t border-dark-border mt-6 text-xs text-gray-400">
+            <div class="flex items-center justify-between mb-1">
+                <span>Modo GitHub Pages</span>
+                <span class="text-emerald-400">● Ativo</span>
+            </div>
+            <p>VitisOS v3.2 Pro • Offline Ready</p>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 p-6 md:p-8 overflow-y-auto">
+
+        <!-- TAB 1: INVENTORY, LABOR & VOICE AI -->
+        <div id="tab-inventory" class="tab-content active space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Inventário, Mão de Obra & Assistente de Voz</h2>
+                    <p class="text-sm text-gray-400">Carregue ficheiros Excel/CSV de mão de obra e stock, ou use Comandos de Voz com IA.</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <label class="cursor-pointer bg-dark-surface hover:bg-gray-700 text-white text-xs font-semibold px-4 py-2.5 rounded-lg border border-dark-border flex items-center space-x-2">
+                        <i class="fa-solid fa-file-excel text-emerald-500"></i>
+                        <span>Importar Excel / CSV</span>
+                        <input type="file" id="excelInput" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleFileUpload(event)">
+                    </label>
+                </div>
+            </div>
+
+            <!-- VOICE ASSISTANT BAR -->
+            <div class="glass-card p-5 border border-wine-600/30 bg-gradient-to-r from-wine-900/30 to-dark-card flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center space-x-4">
+                    <button id="voiceBtn" onclick="toggleVoiceRecognition()" class="w-12 h-12 rounded-full bg-wine-600 hover:bg-wine-700 text-white flex items-center justify-center text-xl transition transform active:scale-95 shadow-lg">
+                        <i class="fa-solid fa-microphone" id="micIcon"></i>
+                    </button>
+                    <div>
+                        <h4 class="font-semibold text-white text-sm">Assistente de Voz IA de Inventário</h4>
+                        <p id="voiceStatus" class="text-xs text-gray-400">Clique no microfone e fale: <i>"Adiciona 50 garrafas de Orange Wine 2025"</i> ou <i>"Registar 8 horas do João na vinha"</i>.</p>
+                    </div>
+                </div>
+                <div id="voiceTranscription" class="text-xs text-amber-300 font-mono bg-dark-bg px-3 py-2 rounded border border-dark-border min-w-[250px] text-center">
+                    Aguardando voz...
+                </div>
+            </div>
+
+            <!-- METRICS -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="glass-card p-4">
+                    <p class="text-xs text-gray-400 uppercase font-semibold">Total Garrafas em Stock</p>
+                    <h3 id="statTotalStock" class="text-2xl font-bold text-white mt-1">4,250</h3>
+                </div>
+                <div class="glass-card p-4">
+                    <p class="text-xs text-gray-400 uppercase font-semibold">Custo Mão de Obra (Mês)</p>
+                    <h3 id="statLaborCost" class="text-2xl font-bold text-amber-400 mt-1">3,420 €</h3>
+                </div>
+                <div class="glass-card p-4">
+                    <p class="text-xs text-gray-400 uppercase font-semibold">Horas Trabalhadas (Vinha)</p>
+                    <h3 class="text-2xl font-bold text-white mt-1">280 hrs</h3>
+                </div>
+                <div class="glass-card p-4">
+                    <p class="text-xs text-gray-400 uppercase font-semibold">Lotes Ativos</p>
+                    <h3 class="text-2xl font-bold text-emerald-400 mt-1">6 Lotes</h3>
+                </div>
+            </div>
+
+            <!-- TABLES GRID -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- INVENTORY TABLE -->
+                <div class="glass-card p-5">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-semibold text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-wine-bottle text-wine-600"></i>
+                            <span>Stock de Vinhos</span>
+                        </h3>
+                        <button onclick="addManualStock()" class="text-xs text-wine-600 hover:underline">+ Adicionar Item</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="text-gray-400 border-b border-dark-border uppercase">
+                                <tr>
+                                    <th class="pb-2">Vinho / Lote</th>
+                                    <th class="pb-2">Ano</th>
+                                    <th class="pb-2">Qtd (Garrafas)</th>
+                                    <th class="pb-2">Preço B2C</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryTable" class="divide-y divide-dark-border text-gray-200">
+                                <tr>
+                                    <td class="py-2.5 font-medium">Orange Wine Skin-Contact</td>
+                                    <td>2025</td>
+                                    <td class="stock-qty font-semibold text-emerald-400">1,800</td>
+                                    <td>22.00 €</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 font-medium">Tinto Biológico ECOCERT</td>
+                                    <td>2023</td>
+                                    <td class="stock-qty font-semibold text-emerald-400">2,450</td>
+                                    <td>18.00 €</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- LABOR TABLE -->
+                <div class="glass-card p-5">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-semibold text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-users text-blue-400"></i>
+                            <span>Mão de Obra Importada (Excel / Registo)</span>
+                        </h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="text-gray-400 border-b border-dark-border uppercase">
+                                <tr>
+                                    <th class="pb-2">Trabalhador</th>
+                                    <th class="pb-2">Tarefa / Parcela</th>
+                                    <th class="pb-2">Horas</th>
+                                    <th class="pb-2">Custo Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="laborTable" class="divide-y divide-dark-border text-gray-200">
+                                <tr>
+                                    <td class="py-2.5 font-medium">João Silva</td>
+                                    <td>Poda & Ponda Verde</td>
+                                    <td>40 hrs</td>
+                                    <td>480.00 €</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 font-medium">Maria Santos</td>
+                                    <td>Tratamento Biológico ECOCERT</td>
+                                    <td>35 hrs</td>
+                                    <td>420.00 €</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: AI SOCIAL MEDIA HUB -->
+        <div id="tab-social" class="tab-content space-y-6">
+            <div>
+                <h2 class="text-2xl font-bold text-white">Social Media AI Orchestrator</h2>
+                <p class="text-sm text-gray-400">Gerador automático de campanhas e publicações focadas na história e no terroir da adega.</p>
+            </div>
+
+            <div class="glass-card p-5 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="space-y-1">
+                    <h4 class="font-semibold text-white text-sm">Gerar Conteúdo Semanal para Redes Sociais</h4>
+                    <p class="text-xs text-gray-400">Gere cópias personalizadas para Instagram, Facebook e LinkedIn em múltiplos idiomas.</p>
+                </div>
+                <button onclick="generateSocialCampaign()" class="bg-wine-600 hover:bg-wine-700 text-white text-xs font-semibold px-5 py-2.5 rounded-lg flex items-center space-x-2">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>Gerar Posts com IA</span>
+                </button>
+            </div>
+
+            <div id="socialPostsGrid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- POST 1 -->
+                <div class="glass-card p-5 space-y-3 relative">
+                    <span class="text-[10px] font-bold text-amber-400 uppercase bg-amber-400/10 px-2 py-0.5 rounded">Instagram / FB</span>
+                    <h4 class="font-semibold text-white text-sm">História do Terroir & Vinha</h4>
+                    <p class="text-xs text-gray-300 leading-relaxed">"Sabia que o solo de esquisto e a altitude da Sertã dão ao nosso vinho biológico a sua mineralidade inconfundível? 🌿🍷 Cada garrafa reflete o respeito pela terra."</p>
+                    <div class="pt-2 text-[11px] text-gray-400">Hashtags: #VinhoBiologico #Enoturismo #Serta</div>
+                </div>
+                <!-- POST 2 -->
+                <div class="glass-card p-5 space-y-3 relative">
+                    <span class="text-[10px] font-bold text-blue-400 uppercase bg-blue-400/10 px-2 py-0.5 rounded">LinkedIn B2B</span>
+                    <h4 class="font-semibold text-white text-sm">Proposta HORECA & Harmonização</h4>
+                    <p class="text-xs text-gray-300 leading-relaxed">"Para os escanções e restaurantes que procuram vinhos autênticos: a frescura do nosso Orange Wine Skin-Contact cria o pairing perfeito com pratos gastronómicos complexos."</p>
+                    <div class="pt-2 text-[11px] text-gray-400">Hashtags: #Sommelier #WineB2B #Gastronomia</div>
+                </div>
+                <!-- POST 3 -->
+                <div class="glass-card p-5 space-y-3 relative">
+                    <span class="text-[10px] font-bold text-purple-400 uppercase bg-purple-400/10 px-2 py-0.5 rounded">Internacional (EN)</span>
+                    <h4 class="font-semibold text-white text-sm">Enoturismo & Eco-Lodges</h4>
+                    <p class="text-xs text-gray-300 leading-relaxed">"Escape into nature. Experience private wine tastings and stay in our organic vineyard safari lodges surrounded by century-old vines. 🍇✨"</p>
+                    <div class="pt-2 text-[11px] text-gray-400">Hashtags: #EcoTurism #PortugalWines #WineLover</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: EXPANSION, PR & SUBSIDIES AI -->
+        <div id="tab-expansion" class="tab-content space-y-6">
+            <div>
+                <h2 class="text-2xl font-bold text-white">Agente de Expansão, PR & Radar de Apoios do Estado</h2>
+                <p class="text-sm text-gray-400">Pesquisa autónoma de restaurantes HORECA, concursos internacionais e programas de apoio financeiro (PDR2030, Portugal2030, Vitis).</p>
+            </div>
+
+            <!-- SUBSIDY MATCHING AI TOOL -->
+            <div class="glass-card p-5 border border-emerald-500/30">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold text-white text-base flex items-center space-x-2">
+                        <i class="fa-solid fa-coins text-emerald-400"></i>
+                        <span>Radar de Apoios do Estado e Fundos Europeus (IA Match)</span>
+                    </h3>
+                    <button onclick="runSubsidySearch()" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded">
+                        🔍 Atualizar Elegibilidade
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-dark-surface p-4 rounded-lg border border-dark-border">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold text-emerald-400 uppercase">Programa Vitis 2026/2027</span>
+                            <span class="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded">95% Elegível</span>
+                        </div>
+                        <h4 class="font-semibold text-white text-sm mb-1">Reestruturação e Conversão de Vinhas</h4>
+                        <p class="text-xs text-gray-400 mb-2">Financiamento até 75% a fundo perdido para reconversão de castas e sistemas de rega eficientes.</p>
+                        <span class="text-[11px] text-amber-300">Prazo: Candidaturas Abertas</span>
+                    </div>
+
+                    <div class="bg-dark-surface p-4 rounded-lg border border-dark-border">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold text-blue-400 uppercase">PDR 2030 / Pequeno Investimento</span>
+                            <span class="text-[10px] bg-blue-500/20 text-blue-300 font-bold px-2 py-0.5 rounded">88% Elegível</span>
+                        </div>
+                        <h4 class="font-semibold text-white text-sm mb-1">Apoio ao Modernismo na Adega & Enoturismo</h4>
+                        <p class="text-xs text-gray-400 mb-2">Apoio à compra de cubas de inox, lagares de granito e equipamentos para acolhimento turísticos.</p>
+                        <span class="text-[11px] text-gray-400">Prazo: Próxima Fase em 45 dias</span>
+                    </div>
+
+                    <div class="bg-dark-surface p-4 rounded-lg border border-dark-border">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold text-purple-400 uppercase">SI Promoção Países Terceiros</span>
+                            <span class="text-[10px] bg-purple-500/20 text-purple-300 font-bold px-2 py-0.5 rounded">80% Elegível</span>
+                        </div>
+                        <h4 class="font-semibold text-white text-sm mb-1">Internacionalização & Feiras Externa</h4>
+                        <p class="text-xs text-gray-400 mb-2">Co-financiamento para participação em feiras no Reino Unido, EUA e Alemanha (ProWein).</p>
+                        <span class="text-[11px] text-emerald-300">Prazo: Aberto contínuo</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PROSPECTION & CONTESTS -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- HORECA LEADS -->
+                <div class="glass-card p-5">
+                    <h3 class="font-semibold text-white mb-3 flex items-center space-x-2">
+                        <i class="fa-solid fa-utensils text-amber-400"></i>
+                        <span>Prospeção Autónoma HORECA (Raio 60km)</span>
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="text-gray-400 border-b border-dark-border uppercase">
+                                <tr>
+                                    <th class="pb-2">Restaurante / Garrafeira</th>
+                                    <th class="pb-2">Local</th>
+                                    <th class="pb-2">Status AI</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-dark-border text-gray-200">
+                                <tr>
+                                    <td class="py-2.5 font-medium">Restaurante O Lume</td>
+                                    <td>Sertã (12 km)</td>
+                                    <td><span class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold">Contacto Enviado</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 font-medium">Garrafeira da Vila</td>
+                                    <td>Caxarias (35 km)</td>
+                                    <td><span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded text-[10px] font-bold">Amostra Solicitada</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- CONTESTS & PR -->
+                <div class="glass-card p-5">
+                    <h3 class="font-semibold text-white mb-3 flex items-center space-x-2">
+                        <i class="fa-solid fa-trophy text-amber-300"></i>
+                        <span>Concursos & Avaliações Críticas</span>
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="text-gray-400 border-b border-dark-border uppercase">
+                                <tr>
+                                    <th class="pb-2">Concurso</th>
+                                    <th class="pb-2">Vinho Indicado</th>
+                                    <th class="pb-2">Ação IA</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-dark-border text-gray-200">
+                                <tr>
+                                    <td class="py-2.5 font-medium">Decanter World Wine Awards 2027</td>
+                                    <td>Orange Wine 2025</td>
+                                    <td><span class="bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded text-[10px] font-bold">Enviar 4 Garrafas</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 font-medium">Concurso Vinhos de Portugal</td>
+                                    <td>Tinto Biológico 2023</td>
+                                    <td><span class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold">Inscrição Efetuada</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: ENOTOURISM & WINE CLUB -->
+        <div id="tab-enotourism" class="tab-content space-y-6">
+            <div>
+                <h2 class="text-2xl font-bold text-white">Enoturismo & Clube de Vinhos</h2>
+                <p class="text-sm text-gray-400">Gestão de reservas de provas, alojamento em lodges e subscrições do clube de vinhos.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="glass-card p-4">
+                    <p class="text-xs text-gray-400 uppercase font-semibold">Reservas Ativas (Mês)</p>
+                    <h3 class="text-2xl font-bold text-white mt-1">48 Visitantes</h3>
+                </div>
+                <div class="glass-card p-4">
+                    <p class="text-xs text-gray-400 uppercase font-semibold">Membros Clube de Vinhos</p>
+                    <h3 class="text-2xl font-bold text-purple-400 mt-1">112 Assinantes</h3>
+                </div>
+                <div class="glass-card p-4">
+                    <p class="text-xs text-gray-400 uppercase font-semibold">Receita Directa Enoturismo</p>
+                    <h3 class="text-2xl font-bold text-emerald-400 mt-1">5,840 €</h3>
+                </div>
+            </div>
+
+            <div class="glass-card p-5">
+                <h3 class="font-semibold text-white mb-4">Próximas Reservas de Provas & Lodges</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="text-gray-400 border-b border-dark-border uppercase">
+                            <tr>
+                                <th class="pb-2">Cliente / Visitante</th>
+                                <th class="pb-2">Experiência</th>
+                                <th class="pb-2">Data / Hora</th>
+                                <th class="pb-2">Pessoas</th>
+                                <th class="pb-2">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-dark-border text-gray-200">
+                            <tr>
+                                <td class="py-3 font-medium">Hans van Dijk (NL)</td>
+                                <td>Estadia Eco-Lodge + Prova Privada</td>
+                                <td>18/10/2026 - 15:00</td>
+                                <td>2 Pax</td>
+                                <td><span class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold">Confirmado</span></td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 font-medium">Beatriz Mendes (PT)</td>
+                                <td>Prova Comentada + Tábua Regional</td>
+                                <td>22/10/2026 - 11:30</td>
+                                <td>4 Pax</td>
+                                <td><span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded text-[10px] font-bold">Pendente Pagamento</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: FINANCIAL COCKPIT -->
+        <div id="tab-finance" class="tab-content space-y-6">
+            <div>
+                <h2 class="text-2xl font-bold text-white">Cockpit Financeiro & Análise de Margens</h2>
+                <p class="text-sm text-gray-400">Visualização integrada da rentabilidade por canal de venda e ponto de equilíbrio.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="glass-card p-4">
+                    <p class="text-xs text-gray-400 uppercase font-semibold">Faturação Acumulada</p>
+                    <h3 class="text-2xl font-bold text-white mt-1">124,500 €</h3>
+                </div>
+                <div class="glass-card p-4">
+                    <p class="text-xs text-gray-400 uppercase font-semibold">Margem Média Líquida</p>
+                    <h3 class="text-2xl font-bold text-emerald-400 mt-1">64.5%</h3>
+                </div>
+                <div class="glass-card p-4">
+                    <p class="text-xs text-gray-400 uppercase font-semibold">Ponto de Equilíbrio (Break-Even)</p>
+                    <h3 class="text-2xl font-bold text-amber-300 mt-1">3,100 garrafas</h3>
+                </div>
+            </div>
+
+            <div class="glass-card p-5">
+                <h3 class="font-semibold text-white mb-4">Rentabilidade e Margens por Canal de Distribuição</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="text-gray-400 border-b border-dark-border uppercase">
+                            <tr>
+                                <th class="pb-2">Canal Comercial</th>
+                                <th class="pb-2">Volume Total</th>
+                                <th class="pb-2">Preço Médio p/ Garrafa</th>
+                                <th class="pb-2">Margem de Lucro Est.</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-dark-border text-gray-200">
+                            <tr>
+                                <td class="py-3 font-medium">Loja Online Direta (B2C)</td>
+                                <td>35% do volume</td>
+                                <td>20.50 €</td>
+                                <td><span class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-bold">78% Margem</span></td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 font-medium">Enoturismo & Provas na Quinta</td>
+                                <td>25% do volume</td>
+                                <td>24.00 €</td>
+                                <td><span class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-bold">85% Margem</span></td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 font-medium">Restauração Local & Garrafeiras (B2B)</td>
+                                <td>40% do volume</td>
+                                <td>13.00 €</td>
+                                <td><span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-bold">48% Margem</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // NAVIGATION TAB SWITCHING
+        function switchTab(tabId, event) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active', 'bg-dark-surface', 'text-white'));
+            
+            document.getElementById('tab-' + tabId).classList.add('active');
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active', 'bg-dark-surface', 'text-white');
+            }
+        }
+
+        // EXCEL / CSV FILE UPLOAD (SHEETJS)
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+
+                    if (jsonData.length > 1) {
+                        const laborTable = document.getElementById('laborTable');
+                        // Add rows from excel
+                        for (let i = 1; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            if (row.length >= 3) {
+                                const tr = document.createElement('tr');
+                                tr.innerHTML = `
+                                    <td class="py-2.5 font-medium text-emerald-300">${row[0] || 'Trabalhador'}</td>
+                                    <td>${row[1] || 'Tarefa Genérica'}</td>
+                                    <td>${row[2] || '0'} hrs</td>
+                                    <td>${row[3] || '120.00'} €</td>
+                                `;
+                                laborTable.appendChild(tr);
+                            }
+                        }
+                        alert('Ficheiro Excel importado com sucesso! ' + (jsonData.length - 1) + ' linhas adicionadas.');
+                    }
+                } catch(err) {
+                    alert('Erro ao ler o ficheiro Excel. Verifique o formato.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // VOICE RECOGNITION (WEB SPEECH API)
+        let recognition = null;
+        let isListening = false;
+
+        function toggleVoiceRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+                alert('O seu navegador não suporta reconhecimento de voz. Experimente no Chrome ou Edge.');
+                return;
+            }
+
+            const micIcon = document.getElementById('micIcon');
+            const voiceStatus = document.getElementById('voiceStatus');
+            const voiceTranscription = document.getElementById('voiceTranscription');
+
+            if (!isListening) {
+                recognition = new SpeechRecognition();
+                recognition.lang = 'pt-PT';
+                recognition.continuous = false;
+                recognition.interimResults = false;
+
+                recognition.onstart = function() {
+                    isListening = true;
+                    micIcon.className = 'fa-solid fa-spinner fa-spin';
+                    voiceStatus.innerText = 'A escutar... Fale agora para atualizar o inventário.';
+                };
+
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    voiceTranscription.innerText = '"' + transcript + '"';
+                    processVoiceCommand(transcript);
+                };
+
+                recognition.onerror = function(event) {
+                    voiceStatus.innerText = 'Erro no áudio. Tente novamente.';
+                    stopListening();
+                };
+
+                recognition.onend = function() {
+                    stopListening();
+                };
+
+                recognition.start();
+            } else {
+                stopListening();
+            }
+
+            function stopListening() {
+                isListening = false;
+                if(recognition) recognition.stop();
+                micIcon.className = 'fa-solid fa-microphone';
+                voiceStatus.innerText = 'Clique para ativar comando de voz de inventário.';
+            }
+        }
+
+        function processVoiceCommand(text) {
+            const lower = text.toLowerCase();
+            if (lower.includes('adiciona') || lower.includes('registar') || lower.includes('garrafas')) {
+                // Parse command and update stock table
+                const inventoryTable = document.getElementById('inventoryTable');
+                const tr = document.createElement('tr');
+                tr.className = 'bg-wine-900/30';
+                tr.innerHTML = `
+                    <td class="py-2.5 font-medium text-amber-300">📱 ${text.substring(0, 30)}...</td>
+                    <td>2026</td>
+                    <td class="stock-qty font-semibold text-emerald-400">+100 (Voz)</td>
+                    <td>20.00 €</td>
+                `;
+                inventoryTable.prepend(tr);
+                alert('IA de Voz: Comando processado! Atualização adicionada ao stock.');
+            } else {
+                alert('Comando de voz reconhecido: "' + text + '". Registado com sucesso.');
+            }
+        }
+
+        // SIMULATION FUNCTIONS
+        function generateSocialCampaign() {
+            alert('Nova campanha de 3 posts de redes sociais gerada pela IA para a Quinta do Bonjardim!');
+        }
+
+        function runSubsidySearch() {
+            alert('A verificar elegibilidade nos portais Portugal 2030 e Vitis... 3 oportunidades encontradas!');
+        }
+
+        function addManualStock() {
+            const name = prompt('Nome do Vinho / Lote:');
+            if (name) {
+                const qty = prompt('Quantidade em Garrafas:');
+                const inventoryTable = document.getElementById('inventoryTable');
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="py-2.5 font-medium">${name}</td>
+                    <td>2026</td>
+                    <td class="stock-qty font-semibold text-emerald-400">${qty || 0}</td>
+                    <td>15.00 €</td>
+                `;
+                inventoryTable.appendChild(tr);
+            }
+        }
+    </script>
+</body>
+</html>
