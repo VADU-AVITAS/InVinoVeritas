@@ -252,7 +252,7 @@
     <!-- ================= SCRIPT DE INTEGRAÇÃO SUPABASE & ERP ================= -->
     <script>
         const SUPABASE_URL = "https://odmyqysfnqkzpkpcsbjq.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kbXlxeXNmbnFrenBrcGNzYmpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4MjA1NzMsImV4cCI6MjEwNzM5NjU3M30.ZYuO9_7pQF5D28mYkJpwDTJSPcTkLIb0En9bAT3HwiA"; // Podes substituir ou usar o modo demo
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kbXlxeXNmbnFrenBrcGNzYmpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4MjA1NzMsImV4cCI6MjEwNzM5NjU3M30.ZYuO9_7pQF5D28mYkJpwDTJSPcTkLIb0En9bAT3HwiA";
         
         let supabaseClient = null;
         try {
@@ -260,7 +260,7 @@
                 supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             }
         } catch (err) {
-            console.warn("Supabase não inicializado.");
+            console.warn("Supabase não inicializado:", err);
         }
 
         // Verificar sessão ao carregar
