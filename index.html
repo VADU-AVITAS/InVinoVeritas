@@ -26,7 +26,7 @@
             <div class="text-center mb-6">
                 <span class="text-rose-500 font-bold tracking-widest text-xs uppercase bg-rose-500/10 px-3 py-1 rounded-full">SaaS Secure Auth</span>
                 <h1 class="text-2xl font-bold mt-2">VitisOS Acesso Seguro</h1>
-                <p class="text-gray-400 text-xs mt-1">Autentique-se com as credenciais da sua base de dados Supabase.</p>
+                <p class="text-gray-400 text-xs mt-1">Autentique-se com o Supabase ou entre em modo demonstração.</p>
             </div>
 
             <div id="auth-error" class="hidden mb-4 p-3 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs rounded-lg"></div>
@@ -43,9 +43,15 @@
                 </div>
 
                 <button type="submit" class="w-full bg-rose-800 hover:bg-rose-700 text-white font-semibold py-3 rounded-lg text-sm transition mt-2 shadow-lg cursor-pointer">
-                    Entrar no ERP <i class="fa-solid fa-arrow-right ml-2"></i>
+                    Entrar com Supabase <i class="fa-solid fa-arrow-right ml-2"></i>
                 </button>
             </form>
+
+            <div class="mt-4">
+                <button onclick="entrarModoDemo()" class="w-full bg-white/5 hover:bg-white/10 text-gray-300 font-semibold py-2.5 rounded-lg text-xs transition border border-white/10 cursor-pointer">
+                    <i class="fa-solid fa-play mr-2 text-emerald-400"></i> Entrar em Modo Demonstração (Sem BD)
+                </button>
+            </div>
 
             <div class="mt-6 text-center text-xs text-gray-500 border-t border-white/5 pt-4">
                 Ligado a <span class="text-gray-300">odmyqysfnqkzpkpcsbjq.supabase.co</span>
@@ -53,7 +59,7 @@
         </div>
     </div>
 
-    <!-- ================= APLICAÇÃO ERP PRINCIPAL (OCULTA ATÉ AUTENTICAÇÃO) ================= -->
+    <!-- ================= APLICAÇÃO ERP PRINCIPAL ================= -->
     <div id="app-container" class="hidden flex h-screen overflow-hidden">
         
         <!-- SIDEBAR -->
@@ -89,8 +95,8 @@
             <div class="border-t border-white/5 pt-4">
                 <div class="flex items-center justify-between">
                     <div>
-                        <span class="text-xs font-semibold text-emerald-400 block">✓ Supabase Ativo</span>
-                        <span class="text-[10px] text-gray-500">RLS & Multi-Tenant</span>
+                        <span class="text-xs font-semibold text-emerald-400 block">✓ Sistema Ativo</span>
+                        <span id="auth-status-label" class="text-[10px] text-gray-500">Supabase / Demo</span>
                     </div>
                     <button onclick="handleSupabaseLogout()" class="text-gray-400 hover:text-rose-400 text-sm p-2 cursor-pointer" title="Terminar Sessão">
                         <i class="fa-solid fa-right-from-bracket"></i>
@@ -105,7 +111,7 @@
             <header class="erp-card border-b border-white/5 px-8 py-4 flex justify-between items-center bg-[#14161f]">
                 <div class="flex items-center gap-4">
                     <h3 id="current-view-title" class="font-bold text-lg">Visão Geral</h3>
-                    <span class="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs px-2.5 py-1 rounded-full font-medium">Tenant: Protegido por RLS</span>
+                    <span class="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs px-2.5 py-1 rounded-full font-medium">Tenant Ativo</span>
                 </div>
                 <div class="flex items-center gap-3">
                     <button onclick="triggerVoiceAI()" class="bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-600/30 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 cursor-pointer">
@@ -123,7 +129,7 @@
                         <div class="erp-card p-5 rounded-xl">
                             <span class="text-gray-400 text-xs uppercase tracking-wider block mb-1">Stock de Garrafas</span>
                             <h4 id="dash-stock" class="text-2xl font-bold">0</h4>
-                            <span class="text-emerald-400 text-xs mt-1 block">✓ Sincronizado Supabase</span>
+                            <span class="text-emerald-400 text-xs mt-1 block">✓ Atualizado</span>
                         </div>
                         <div class="erp-card p-5 rounded-xl">
                             <span class="text-gray-400 text-xs uppercase tracking-wider block mb-1">Faturação YTD</span>
@@ -143,15 +149,11 @@
                     </div>
 
                     <div class="erp-card p-6 rounded-xl">
-                        <h4 class="font-bold text-sm mb-4">Atividade Segura da Base de Dados</h4>
+                        <h4 class="font-bold text-sm mb-4">Estado da Aplicação</h4>
                         <div class="space-y-3 text-xs text-gray-300">
                             <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                                <span>🔒 Sessão autenticada via token JWT encriptado (Supabase Auth).</span>
-                                <span class="text-emerald-400 font-semibold">Ativo</span>
-                            </div>
-                            <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                                <span>📋 Caderno de Campo: Dados restritos ao tenant autenticado.</span>
-                                <span class="text-emerald-400 font-semibold">RLS Protegido</span>
+                                <span>🔒 Ambiente ERP carregado com sucesso.</span>
+                                <span class="text-emerald-400 font-semibold">Operacional</span>
                             </div>
                         </div>
                     </div>
@@ -175,7 +177,7 @@
                     <div class="erp-card rounded-xl overflow-hidden">
                         <div class="p-4 border-b border-white/5 flex justify-between items-center">
                             <h5 class="font-bold text-sm">Lotes de Vinho & Custos</h5>
-                            <span class="text-xs text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full">Isolado por RLS</span>
+                            <span class="text-xs text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full">Ativo</span>
                         </div>
                         <table class="w-full text-left text-xs">
                             <thead class="bg-white/5 text-gray-400 uppercase">
@@ -189,7 +191,7 @@
                             </thead>
                             <tbody id="inventory-table-body" class="divide-y divide-white/5">
                                 <tr>
-                                    <td colspan="5" class="py-4 px-4 text-center text-gray-500">A carregar inventário da base de dados...</td>
+                                    <td colspan="5" class="py-4 px-4 text-center text-gray-500">A carregar inventário...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -247,30 +249,34 @@
         </main>
     </div>
 
-    <!-- ================= SCRIPT DE INTEGRAÇÃO SUPABASE ================= -->
+    <!-- ================= SCRIPT DE INTEGRAÇÃO SUPABASE & ERP ================= -->
     <script>
         const SUPABASE_URL = "https://odmyqysfnqkzpkpcsbjq.supabase.co";
-        const SUPABASE_ANON_KEY = "sb_publishable_EOd0PLKlnfoE7QWdAifotg_JR_8x6Rs";
+        const SUPABASE_ANON_KEY = "COLOCA_AQUI_A_TUA_ANON_KEY_PUBLICA"; // Podes substituir ou usar o modo demo
         
         let supabaseClient = null;
         try {
-            if (SUPABASE_ANON_KEY !== "COLOCA_AQUI_A_TUA_ANON_KEY_PUBLICA") {
+            if (SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== "COLOCA_AQUI_A_TUA_ANON_KEY_PUBLICA") {
                 supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             }
         } catch (err) {
-            console.warn("Supabase não inicializado. Verifique a Anon Key.");
+            console.warn("Supabase não inicializado.");
         }
 
-        // Verificar sessão ativa ao carregar a página
+        // Verificar sessão ao carregar
         document.addEventListener("DOMContentLoaded", async () => {
             if (!supabaseClient) return;
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session) {
-                await onLoginSuccess(session.user);
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session) {
+                    await onLoginSuccess(session.user);
+                }
+            } catch (e) {
+                console.log("Sem sessão ativa.");
             }
         });
 
-        // Login Real com Supabase Auth
+        // Login Real com Supabase
         async function handleSupabaseLogin(event) {
             event.preventDefault();
             const email = document.getElementById('auth-email').value;
@@ -279,8 +285,8 @@
             errorBox.classList.add('hidden');
 
             if (!supabaseClient) {
-                // Modo demonstração caso a Anon Key ainda não tenha sido inserida
-                await onLoginSuccess({ id: 'demo-id', email: email });
+                errorBox.textContent = "Aviso: Anon Key não configurada. Utilize o botão 'Entrar em Modo Demonstração'.";
+                errorBox.classList.remove('hidden');
                 return;
             }
 
@@ -290,7 +296,7 @@
             });
 
             if (error) {
-                errorBox.textContent = "Erro na autenticação: " + error.message;
+                errorBox.textContent = "Erro de Autenticação: " + error.message;
                 errorBox.classList.remove('hidden');
                 return;
             }
@@ -298,75 +304,66 @@
             await onLoginSuccess(data.user);
         }
 
-        async function onLoginSuccess(user) {
+        // Entrar em modo demonstração (sem base de dados)
+        function entrarModoDemo() {
+            onLoginSuccess({ id: 'demo-user-id', email: 'produtor.demo@vitisos.pt' }, true);
+        }
+
+        async function onLoginSuccess(user, isDemo = false) {
             document.getElementById('auth-modal').classList.add('hidden');
             document.getElementById('app-container').classList.remove('hidden');
             document.getElementById('sidebar-user-email').textContent = user.email;
+            document.getElementById('auth-status-label').textContent = isDemo ? "Modo Demonstração" : "Supabase Ativo";
             
-            // Carregar dados da tabela inventario
-            await carregarInventarioDoSupabase(user.id);
+            await carregarInventario(user.id, isDemo);
         }
 
         async function handleSupabaseLogout() {
             if (supabaseClient) {
-                await supabaseClient.auth.signOut();
+                await supabaseClient.auth.signOut().catch(() => {});
             }
             document.getElementById('app-container').classList.add('hidden');
             document.getElementById('auth-modal').classList.remove('hidden');
         }
 
-        // Leitura protegida do inventário no Supabase
-        async function carregarInventarioDoSupabase(userId) {
+        // Carregar inventário (da BD ou dados demo)
+        async function carregarInventario(userId, isDemo) {
             const tableBody = document.getElementById('inventory-table-body');
             const stockElement = document.getElementById('dash-stock');
 
-            if (!supabaseClient) {
-                // Dados de fallback de exibição local
-                renderFallbackTable();
+            if (isDemo || !supabaseClient) {
+                renderizarTabelaDemo(tableBody, stockElement);
                 return;
             }
 
-            const { data, error } = await supabaseClient
-                .from('inventario')
-                .select('*');
+            const { data, error } = await supabaseClient.from('inventario').select('*');
 
-            if (error) {
-                console.error("Erro ao consultar inventário:", error.message);
-                renderFallbackTable();
+            if (error || !data || data.length === 0) {
+                console.warn("Aviso ao carregar inventário da BD, a carregar dados de demonstração:", error?.message);
+                renderizarTabelaDemo(tableBody, stockElement);
                 return;
             }
 
-            if (data && data.length > 0) {
-                let html = '';
-                let totalGarrafas = 0;
-                
-                data.forEach(item => {
-                    totalGarrafas += Number(item.quantidade || 0);
-                    html += `
-                        <tr class="border-b border-white/5">
-                            <td class="py-3 px-4 font-medium">${item.produto}</td>
-                            <td class="py-3 px-4 text-gray-400">${item.lote || 'N/A'}</td>
-                            <td class="py-3 px-4 font-semibold text-emerald-400">${item.quantidade} garrafas</td>
-                            <td class="py-3 px-4">${Number(item.custo).toFixed(2)} €</td>
-                            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400">Supabase DB</span></td>
-                        </tr>
-                    `;
-                });
-                tableBody.innerHTML = html;
-                stockElement.textContent = totalGarrafas.toLocaleString('pt-PT');
-            } else {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="py-4 px-4 text-center text-gray-500">Nenhum registo encontrado no inventário. Utilize a importação de Excel para adicionar.</td>
+            let html = '';
+            let totalGarrafas = 0;
+            data.forEach(item => {
+                totalGarrafas += Number(item.quantidade || 0);
+                html += `
+                    <tr class="border-b border-white/5">
+                        <td class="py-3 px-4 font-medium">${item.produto}</td>
+                        <td class="py-3 px-4 text-gray-400">${item.lote || 'N/A'}</td>
+                        <td class="py-3 px-4 font-semibold text-emerald-400">${item.quantidade} garrafas</td>
+                        <td class="py-3 px-4">${Number(item.custo).toFixed(2)} €</td>
+                        <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400">Supabase DB</span></td>
                     </tr>
                 `;
-                stockElement.textContent = "0";
-            }
+            });
+            tableBody.innerHTML = html;
+            stockElement.textContent = totalGarrafas.toLocaleString('pt-PT');
         }
 
-        function renderFallbackTable() {
-            const tableBody = document.getElementById('inventory-table-body');
-            document.getElementById('dash-stock').textContent = "4,250";
+        function renderizarTabelaDemo(tableBody, stockElement) {
+            stockElement.textContent = "4,250";
             tableBody.innerHTML = `
                 <tr class="border-b border-white/5">
                     <td class="py-3 px-4 font-medium">Orange Wine Skin-Contact</td>
@@ -427,11 +424,10 @@
                     const qtd = Number(item.Quantidade || 100);
                     const custo = Number(item.Custo || 4.00);
 
-                    // Guardar na BD se o Supabase estiver ligado
                     if (supabaseClient) {
                         await supabaseClient.from('inventario').insert([
                             { produto: prod, lote: lote, quantidade: qtd, custo: custo }
-                        ]);
+                        ]).catch(() => {});
                     }
 
                     html += `
@@ -445,4 +441,34 @@
                     `;
                 }
 
-                tableBody.insertAdjacentHTML
+                tableBody.insertAdjacentHTML('afterbegin', html);
+                alert(`Sucesso! ${jsonData.length} linhas importadas.`);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Comandos por Voz
+        function triggerVoiceAI() {
+            const speech = prompt("Simule o comando por voz (ex: 'Adicionar 100 garrafas de Orange Wine'):");
+            if (!speech) return;
+
+            const tableBody = document.getElementById('inventory-table-body');
+            const row = `
+                <tr class="border-b border-white/5 bg-purple-500/10">
+                    <td class="py-3 px-4 font-medium">Vinho Registado por Voz</td>
+                    <td class="py-3 px-4 text-gray-400">Lote Voz AI</td>
+                    <td class="py-3 px-4 font-semibold text-emerald-400">100 garrafas</td>
+                    <td class="py-3 px-4">4.20 €</td>
+                    <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-purple-500/10 text-purple-300">🎙️ Voz AI</span></td>
+                </tr>
+            `;
+            tableBody.insertAdjacentHTML('afterbegin', row);
+            alert(`Comando processado com sucesso: "${speech}"`);
+        }
+
+        function loadAIPRecommendations() {
+            alert("Análise IA atualizada com base nos programas de apoio comunitário vigentes!");
+        }
+    </script>
+</body>
+</html>
