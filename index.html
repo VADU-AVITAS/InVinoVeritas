@@ -3,498 +3,471 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VitisOS ERP | Sistema Operacional para Produtores de Vinho</title>
-    <!-- Tailwind CSS v4 CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Google Fonts & FontAwesome -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>VitisOS - ERP para Produtores de Vinho</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Supabase JS Client -->
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Supabase JS Client CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- SheetJS para Processamento de Excel -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        wine: {
+                            50: '#fdf2f4',
+                            100: '#fce7ea',
+                            500: '#800020',
+                            600: '#66001a',
+                            700: '#4d0013',
+                            900: '#220008',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f1117; color: #f3f4f6; }
-        .erp-card { background: #181b22; border: 1px solid rgba(255, 255, 255, 0.07); }
+        /* Custom scrollbar for dark UI aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111827;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4B5563;
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col">
 
-    <!-- ================= MODAL DE AUTENTICAÇÃO SUPABASE ================= -->
-    <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
-        <div class="erp-card w-full max-w-md rounded-2xl p-8 shadow-2xl border-t-4 border-rose-800">
-            <div class="text-center mb-6">
-                <span class="text-rose-500 font-bold tracking-widest text-xs uppercase bg-rose-500/10 px-3 py-1 rounded-full">SaaS Secure Auth</span>
-                <h1 class="text-2xl font-bold mt-2">VitisOS Acesso Seguro</h1>
-                <p class="text-gray-400 text-xs mt-1">Autentique-se com o Supabase ou entre em modo demonstração.</p>
+    <!-- Top Navigation Header -->
+    <header class="bg-slate-900/80 backdrop-blur border-b border-slate-800 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-wine-700 via-wine-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-wine-900/50">
+                    <i class="fa-solid fa-wine-glass text-lg"></i>
+                </div>
+                <div>
+                    <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-wine-100 bg-clip-text text-transparent">VitisOS</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-wine-500/20 text-wine-300 font-medium ml-2 border border-wine-500/30">Wine ERP</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <button onclick="loadAIPRecommendations()" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-medium border border-slate-700 transition flex items-center gap-2">
+                    <i class="fa-solid fa-lightbulb text-amber-400"></i>
+                    <span class="hidden sm:inline">Programas</span> AIP / Apoios
+                </button>
+                <div class="h-6 w-[1px] bg-slate-800"></div>
+                <div class="flex items-center gap-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg">
+                    <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                    <span class="text-xs font-mono text-slate-300 hidden md:inline">ID: 0503b314...48c0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        
+        <!-- Hero Section & Primary Actions -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-slate-900 to-wine-950/40 p-6 rounded-2xl border border-slate-800/80 shadow-2xl">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Gestão de Inventário de Adega</h1>
+                <p class="text-slate-400 text-sm mt-1">Registo automatizado via comandos de voz processados por Inteligência Artificial (LLM).</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+                <button id="voice-btn" onclick="openVoiceModal()" class="px-5 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-wine-500 hover:from-purple-500 hover:to-wine-600 text-white font-semibold shadow-lg shadow-purple-900/30 border border-purple-400/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-2 group">
+                    <i class="fa-solid fa-microphone text-purple-200 group-hover:scale-110 transition-transform"></i>
+                    <span>Comando por Voz AI</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- KPI Analytics Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-slate-900/90 border border-slate-800/80 rounded-xl p-5 hover:border-slate-700 transition">
+                <div class="flex items-center justify-between text-slate-400 mb-3">
+                    <span class="text-xs font-medium uppercase tracking-wider">Total em Stock</span>
+                    <i class="fa-solid fa-boxes-stacked text-purple-400"></i>
+                </div>
+                <div id="kpi-total-stock" class="text-2xl font-bold text-white">0</div>
+                <p class="text-xs text-slate-500 mt-1">Garrafas registadas</p>
             </div>
 
-            <div id="auth-error" class="hidden mb-4 p-3 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs rounded-lg"></div>
-
-            <form onsubmit="handleSupabaseLogin(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">E-mail Profissional</label>
-                    <input type="email" id="auth-email" required class="w-full bg-[#12141c] border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-rose-700" placeholder="produtor@quintadobonjardim.pt">
+            <div class="bg-slate-900/90 border border-slate-800/80 rounded-xl p-5 hover:border-slate-700 transition">
+                <div class="flex items-center justify-between text-slate-400 mb-3">
+                    <span class="text-xs font-medium uppercase tracking-wider">Lotes Ativos</span>
+                    <i class="fa-solid fa-wine-bottle text-emerald-400"></i>
                 </div>
+                <div id="kpi-active-batches" class="text-2xl font-bold text-white">0</div>
+                <p class="text-xs text-slate-500 mt-1">Lotes únicos no sistema</p>
+            </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Palavra-passe</label>
-                    <input type="password" id="auth-password" required class="w-full bg-[#12141c] border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-rose-700" placeholder="••••••••">
+            <div class="bg-slate-900/90 border border-slate-800/80 rounded-xl p-5 hover:border-slate-700 transition">
+                <div class="flex items-center justify-between text-slate-400 mb-3">
+                    <span class="text-xs font-medium uppercase tracking-wider">Última Ingestão IA</span>
+                    <i class="fa-solid fa-robot text-purple-400"></i>
                 </div>
+                <div id="kpi-last-ingestion" class="text-lg font-bold text-slate-200 truncate">Sem registos</div>
+                <p class="text-xs text-slate-500 mt-1">Ingestão por voz</p>
+            </div>
 
-                <button type="submit" class="w-full bg-rose-800 hover:bg-rose-700 text-white font-semibold py-3 rounded-lg text-sm transition mt-2 shadow-lg cursor-pointer">
-                    Entrar com Supabase <i class="fa-solid fa-arrow-right ml-2"></i>
-                </button>
-            </form>
+            <div class="bg-slate-900/90 border border-slate-800/80 rounded-xl p-5 hover:border-slate-700 transition">
+                <div class="flex items-center justify-between text-slate-400 mb-3">
+                    <span class="text-xs font-medium uppercase tracking-wider">Estado do Sistema</span>
+                    <i class="fa-solid fa-server text-emerald-400"></i>
+                </div>
+                <div class="text-lg font-bold text-emerald-400 flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> Edge Function Active
+                </div>
+                <p class="text-xs text-slate-500 mt-1">Supabase + Groq AI</p>
+            </div>
+        </div>
 
-            <div class="mt-4">
-                <button onclick="entrarModoDemo()" class="w-full bg-white/5 hover:bg-white/10 text-gray-300 font-semibold py-2.5 rounded-lg text-xs transition border border-white/10 cursor-pointer">
-                    <i class="fa-solid fa-play mr-2 text-emerald-400"></i> Entrar em Modo Demonstração (Sem BD)
+        <!-- Main Inventory Data Table -->
+        <div class="bg-slate-900/80 rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <h2 class="text-lg font-semibold text-white">Tabela de Inventário (`inventario`)</h2>
+                    <span id="record-count-badge" class="px-2 py-0.5 rounded-full text-xs bg-slate-800 text-slate-300 font-mono">0 itens</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="relative flex-1 sm:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <input type="text" id="table-search" onkeyup="filterTable()" placeholder="Pesquisar produto ou lote..." class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition">
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-slate-950/60 border-b border-slate-800 text-xs text-slate-400 uppercase tracking-wider">
+                            <th class="py-3.5 px-6 font-semibold">Produto / Vinho</th>
+                            <th class="py-3.5 px-6 font-semibold">Lote</th>
+                            <th class="py-3.5 px-6 font-semibold">Quantidade</th>
+                            <th class="py-3.5 px-6 font-semibold">Custo Unitário</th>
+                            <th class="py-3.5 px-6 font-semibold">Origem / Método</th>
+                            <th class="py-3.5 px-6 font-semibold text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventory-table-body" class="divide-y divide-slate-800/60">
+                        <!-- Dynamic content populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="empty-state" class="hidden p-8 text-center text-slate-500">
+                <i class="fa-solid fa-box-open text-3xl mb-2 text-slate-600"></i>
+                <p>Nenhum registo encontrado no inventário.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Page Footer -->
+    <footer class="bg-slate-900 border-t border-slate-800 py-6 text-center text-xs text-slate-500 mt-auto">
+        <p>VitisOS &copy; 2026 - ERP para a Indústria Vitivinícola | Powered by Supabase Edge Functions & Groq (Llama-3.3)</p>
+    </footer>
+
+    <!-- Interactive Voice Simulation Modal Overlay -->
+    <div id="voice-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6 transform scale-95 transition-transform duration-200" id="modal-container">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                        <i class="fa-solid fa-microphone text-base"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-white text-base">Comando de Voz para Inventário</h3>
+                        <p class="text-xs text-slate-400">Simulação de ingestão via texto por voz</p>
+                    </div>
+                </div>
+                <button onclick="closeVoiceModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
 
-            <div class="mt-6 text-center text-xs text-gray-500 border-t border-white/5 pt-4">
-                Ligado a <span class="text-gray-300">odmyqysfnqkzpkpcsbjq.supabase.co</span>
+            <div class="space-y-4">
+                <label class="block text-xs font-medium text-slate-300">
+                    Instrução falada do produtor:
+                </label>
+                <textarea id="modal-voice-input" rows="3" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition resize-none" placeholder="Exemplo: Adicionar 100 garrafas de Orange Wine Lote 2025 custo 4.50"></textarea>
+                
+                <div class="flex flex-wrap gap-2 text-xs">
+                    <span class="text-slate-500 self-center">Sugestões:</span>
+                    <button onclick="setSuggestion('Adicionar 120 garrafas de Orange Wine Lote 2025 custo 4.50')" class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                        Orange Wine 120 un.
+                    </button>
+                    <button onclick="setSuggestion('Registar 500 garrafas de Vinho Verde Reserva Lote VV-2026')" class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                        Vinho Verde 500 un.
+                    </button>
+                </div>
+            </div>
+
+            <div id="modal-status-box" class="hidden p-3 rounded-lg text-xs font-mono"></div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button onclick="closeVoiceModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition">
+                    Cancelar
+                </button>
+                <button id="modal-submit-btn" onclick="executeVoiceAI()" class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium transition flex items-center gap-2">
+                    <i class="fa-solid fa-paper-plane text-xs"></i>
+                    <span>Processar Comando</span>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- ================= APLICAÇÃO ERP PRINCIPAL ================= -->
-    <div id="app-container" class="hidden flex h-screen overflow-hidden">
-        
-        <!-- SIDEBAR -->
-        <aside class="w-64 erp-card border-r border-white/5 flex flex-col justify-between p-5">
-            <div>
-                <div class="flex items-center gap-3 mb-8">
-                    <div class="bg-rose-800 text-white w-9 h-9 rounded-lg flex items-center justify-center font-bold text-lg">🍇</div>
-                    <div>
-                        <h2 class="font-bold text-sm tracking-wide">VitisOS <span class="text-rose-500 font-normal text-xs">ERP</span></h2>
-                        <span id="sidebar-user-email" class="text-[10px] text-gray-400 block truncate w-36">Sessão Ativa</span>
-                    </div>
-                </div>
-
-                <nav class="space-y-1">
-                    <button onclick="switchTab('dashboard', event)" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white transition active bg-white/5 text-white">
-                        <i class="fa-solid fa-chart-pie w-5 text-rose-500"></i> Dashboard
-                    </button>
-                    <button onclick="switchTab('inventory', event)" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
-                        <i class="fa-solid fa-boxes-stacked w-5 text-emerald-500"></i> Inventário & Mão de Obra
-                    </button>
-                    <button onclick="switchTab('ai-expansion', event)" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
-                        <i class="fa-solid fa-robot w-5 text-amber-500"></i> Apoios do Estado & IA
-                    </button>
-                    <button onclick="switchTab('social', event)" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
-                        <i class="fa-solid fa-share-nodes w-5 text-blue-500"></i> Social Media Hub
-                    </button>
-                    <button onclick="switchTab('tourism', event)" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
-                        <i class="fa-solid fa-map-location-dot w-5 text-purple-500"></i> Enoturismo & Clube
-                    </button>
-                </nav>
-            </div>
-
-            <div class="border-t border-white/5 pt-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <span class="text-xs font-semibold text-emerald-400 block">✓ Sistema Ativo</span>
-                        <span id="auth-status-label" class="text-[10px] text-gray-500">Supabase / Demo</span>
-                    </div>
-                    <button onclick="handleSupabaseLogout()" class="text-gray-400 hover:text-rose-400 text-sm p-2 cursor-pointer" title="Terminar Sessão">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                    </button>
-                </div>
-            </div>
-        </aside>
-
-        <!-- ÁREA DE CONTEÚDO PRINCIPAL -->
-        <main class="flex-1 flex flex-col overflow-y-auto">
-            <!-- BARRA SUPERIOR -->
-            <header class="erp-card border-b border-white/5 px-8 py-4 flex justify-between items-center bg-[#14161f]">
-                <div class="flex items-center gap-4">
-                    <h3 id="current-view-title" class="font-bold text-lg">Visão Geral</h3>
-                    <span class="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs px-2.5 py-1 rounded-full font-medium">Tenant Ativo</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <button onclick="triggerVoiceAI()" class="bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-600/30 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 cursor-pointer">
-                        <i class="fa-solid fa-microphone"></i> Registo por Voz AI
-                    </button>
-                </div>
-            </header>
-
-            <!-- CONTEÚDO DAS ABAS -->
-            <div class="p-8 space-y-6">
-
-                <!-- 1. ABA DASHBOARD -->
-                <div id="tab-dashboard" class="tab-content space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div class="erp-card p-5 rounded-xl">
-                            <span class="text-gray-400 text-xs uppercase tracking-wider block mb-1">Stock de Garrafas</span>
-                            <h4 id="dash-stock" class="text-2xl font-bold">0</h4>
-                            <span class="text-emerald-400 text-xs mt-1 block">✓ Atualizado</span>
-                        </div>
-                        <div class="erp-card p-5 rounded-xl">
-                            <span class="text-gray-400 text-xs uppercase tracking-wider block mb-1">Faturação YTD</span>
-                            <h4 class="text-2xl font-bold text-rose-400">124,500 €</h4>
-                            <span class="text-gray-500 text-xs mt-1 block">Margem Média: 64.5%</span>
-                        </div>
-                        <div class="erp-card p-5 rounded-xl">
-                            <span class="text-gray-400 text-xs uppercase tracking-wider block mb-1">Apoios Disponíveis</span>
-                            <h4 class="text-2xl font-bold text-amber-400">2 Programas</h4>
-                            <span class="text-amber-300/80 text-xs mt-1 block">Portugal 2030 / VITIS</span>
-                        </div>
-                        <div class="erp-card p-5 rounded-xl">
-                            <span class="text-gray-400 text-xs uppercase tracking-wider block mb-1">Reservas Enoturismo</span>
-                            <h4 class="text-2xl font-bold text-purple-400">48 Visitantes</h4>
-                            <span class="text-gray-500 text-xs mt-1 block">Este mês</span>
-                        </div>
-                    </div>
-
-                    <div class="erp-card p-6 rounded-xl">
-                        <h4 class="font-bold text-sm mb-4">Estado da Aplicação</h4>
-                        <div class="space-y-3 text-xs text-gray-300">
-                            <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                                <span>🔒 Ambiente ERP carregado com sucesso.</span>
-                                <span class="text-emerald-400 font-semibold">Operacional</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 2. ABA INVENTÁRIO & MÃO DE OBRA -->
-                <div id="tab-inventory" class="tab-content hidden space-y-6">
-                    <div class="erp-card p-6 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4">
-                        <div>
-                            <h4 class="font-bold text-base">Gestão de Inventário & Mão de Obra</h4>
-                            <p class="text-gray-400 text-xs mt-1">Carregue dados via Excel (SheetJS) ou adicione diretamente.</p>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <label class="bg-rose-800 hover:bg-rose-700 text-white text-xs font-semibold px-4 py-2.5 rounded-lg cursor-pointer transition">
-                                <i class="fa-solid fa-file-excel mr-2"></i> Importar Excel / CSV
-                                <input type="file" id="excel-file-input" class="hidden" accept=".xlsx, .xls, .csv" onchange="handleExcelUpload(event)">
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="erp-card rounded-xl overflow-hidden">
-                        <div class="p-4 border-b border-white/5 flex justify-between items-center">
-                            <h5 class="font-bold text-sm">Lotes de Vinho & Custos</h5>
-                            <span class="text-xs text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full">Ativo</span>
-                        </div>
-                        <table class="w-full text-left text-xs">
-                            <thead class="bg-white/5 text-gray-400 uppercase">
-                                <tr>
-                                    <th class="py-3 px-4">Produto</th>
-                                    <th class="py-3 px-4">Lote / Colheita</th>
-                                    <th class="py-3 px-4">Quantidade</th>
-                                    <th class="py-3 px-4">Custo Un.</th>
-                                    <th class="py-3 px-4">Origem</th>
-                                </tr>
-                            </thead>
-                            <tbody id="inventory-table-body" class="divide-y divide-white/5">
-                                <tr>
-                                    <td colspan="5" class="py-4 px-4 text-center text-gray-500">A carregar inventário...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- 3. ABA APOIOS DO ESTADO & IA -->
-                <div id="tab-ai-expansion" class="tab-content hidden space-y-6">
-                    <div class="erp-card p-6 rounded-xl">
-                        <div class="flex justify-between items-center mb-4">
-                            <div>
-                                <h4 class="font-bold text-base">Radar de Apoios do Estado & Recomendações IA</h4>
-                                <p class="text-gray-400 text-xs mt-1">Análise inteligente adaptada ao perfil e região deste produtor.</p>
-                            </div>
-                            <button onclick="loadAIPRecommendations()" class="bg-amber-600/20 border border-amber-500/30 text-amber-400 hover:bg-amber-600/30 px-4 py-2 rounded-lg text-xs font-semibold transition cursor-pointer">
-                                <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Executar Análise IA
-                            </button>
-                        </div>
-                        <div id="ai-recommendations-box" class="space-y-4">
-                            <div class="p-4 bg-white/5 border border-white/10 rounded-xl">
-                                <h5 class="font-bold text-sm text-amber-400 mb-1">Programa VITIS (Reestruturação da Vinha)</h5>
-                                <p class="text-xs text-gray-300">Elegível para investimento em sistemas de rega gota-a-gota e reconversão de castas autóctones. Subsídio a fundo perdido até 75%.</p>
-                            </div>
-                            <div class="p-4 bg-white/5 border border-white/10 rounded-xl">
-                                <h5 class="font-bold text-sm text-amber-400 mb-1">Portugal 2030 - Inovação Produtiva</h5>
-                                <p class="text-xs text-gray-300">Indicado para digitalização da adega, controlo térmico automatizado e expansão do ecoturismo.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 4. ABA SOCIAL MEDIA HUB -->
-                <div id="tab-social" class="tab-content hidden space-y-6">
-                    <div class="erp-card p-6 rounded-xl">
-                        <h4 class="font-bold text-base mb-2">Social Media & Storytelling Hub</h4>
-                        <p class="text-gray-400 text-xs mb-4">Geração automática de publicações baseadas na colheita e notas de cata.</p>
-                        <button onclick="alert('Campanha semanal gerada com sucesso para Instagram e LinkedIn!')" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition cursor-pointer">
-                            ✨ Gerar Posts com IA
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 5. ABA ENOTURISMO & CLUBE DE VINHOS -->
-                <div id="tab-tourism" class="tab-content hidden space-y-6">
-                    <div class="erp-card p-6 rounded-xl">
-                        <h4 class="font-bold text-base mb-2">Enoturismo & Clube de Vinhos</h4>
-                        <p class="text-gray-400 text-xs mb-4">Gestão de provas, Safari Lodges e subscrições recorrentes.</p>
-                        <div class="p-4 bg-white/5 rounded-xl text-xs text-gray-300">
-                            <strong>112 Membros ativos</strong> no Clube de Vinhos com entrega trimestral agendada.
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </main>
-    </div>
-
-    <!-- ================= SCRIPT DE INTEGRAÇÃO SUPABASE & ERP ================= -->
     <script>
-        const SUPABASE_URL = "https://odmyqysfnqkzpkpcsbjq.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kbXlxeXNmbnFrenBrcGNzYmpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4MjA1NzMsImV4cCI6MjEwNzM5NjU3M30.ZYuO9_7pQF5D28mYkJpwDTJSPcTkLIb0En9bAT3HwiA";
-        
+        // System Configuration Constants
+        const SUPABASE_FUNCTION_URL = "https://odmyqysfnqkzpkpcsbjq.supabase.co/functions/v1/process-voice-inventory";
+        const FALLBACK_USER_ID = "0503b314-d520-48c0-b5d0-f842bc362438";
+
+        // Initial Seed Mock Inventory Data
+        let inventoryItems = [
+            { id: 1, produto: "Touriga Nacional Reserva", lote: "TN-2023", quantidade: 450, custo: 6.50, origem: "Manual" },
+            { id: 2, produto: "Alvarinho Vinho Verde", lote: "ALV-2024", quantidade: 1200, custo: 3.80, origem: "Manual" },
+            { id: 3, produto: "Syrah Adega Velha", lote: "SY-2022", quantidade: 280, custo: 9.00, origem: "Manual" }
+        ];
+
+        // Safely Initialize Supabase JS Client
         let supabaseClient = null;
         try {
-            if (SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== "COLOCA_AQUI_A_TUA_ANON_KEY_PUBLICA") {
-                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            if (window.supabase) {
+                // Initialize with dummy endpoint fallback if credentials are omitted
+                supabaseClient = window.supabase.createClient('https://odmyqysfnqkzpkpcsbjq.supabase.co', 'public-anon-key');
             }
-        } catch (err) {
-            console.warn("Supabase não inicializado:", err);
+        } catch (e) {
+            console.warn("Supabase Client Init Warning:", e);
         }
 
-        // Verificar sessão ao carregar
-        document.addEventListener("DOMContentLoaded", async () => {
-            if (!supabaseClient) return;
-            try {
-                const { data: { session } } = await supabaseClient.auth.getSession();
-                if (session) {
-                    await onLoginSuccess(session.user);
-                }
-            } catch (e) {
-                console.log("Sem sessão ativa.");
-            }
+        // DOM Load Initializer
+        document.addEventListener("DOMContentLoaded", () => {
+            renderInventoryTable();
+            updateKPIs();
         });
 
-        // Login Real com Supabase
-        async function handleSupabaseLogin(event) {
-            event.preventDefault();
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-password').value;
-            const errorBox = document.getElementById('auth-error');
-            errorBox.classList.add('hidden');
-
-            if (!supabaseClient) {
-                errorBox.textContent = "Aviso: Anon Key não configurada. Utilize o botão 'Entrar em Modo Demonstração'.";
-                errorBox.classList.remove('hidden');
-                return;
-            }
-
-            const { data, error } = await supabaseClient.auth.signInWithPassword({
-                email: email,
-                password: password,
-            });
-
-            if (error) {
-                errorBox.textContent = "Erro de Autenticação: " + error.message;
-                errorBox.classList.remove('hidden');
-                return;
-            }
-
-            await onLoginSuccess(data.user);
-        }
-
-        // Entrar em modo demonstração (sem base de dados)
-        function entrarModoDemo() {
-            onLoginSuccess({ id: 'demo-user-id', email: 'produtor.demo@vitisos.pt' }, true);
-        }
-
-        async function onLoginSuccess(user, isDemo = false) {
-            document.getElementById('auth-modal').classList.add('hidden');
-            document.getElementById('app-container').classList.remove('hidden');
-            document.getElementById('sidebar-user-email').textContent = user.email;
-            document.getElementById('auth-status-label').textContent = isDemo ? "Modo Demonstração" : "Supabase Ativo";
+        // Render Inventory Table Content
+        function renderInventoryTable() {
+            const tbody = document.getElementById('inventory-table-body');
+            const emptyState = document.getElementById('empty-state');
+            const recordBadge = document.getElementById('record-count-badge');
             
-            await carregarInventario(user.id, isDemo);
-        }
+            tbody.innerHTML = '';
 
-        async function handleSupabaseLogout() {
-            if (supabaseClient) {
-                await supabaseClient.auth.signOut().catch(() => {});
-            }
-            document.getElementById('app-container').classList.add('hidden');
-            document.getElementById('auth-modal').classList.remove('hidden');
-        }
-
-        // Carregar inventário (da BD ou dados demo)
-        async function carregarInventario(userId, isDemo) {
-            const tableBody = document.getElementById('inventory-table-body');
-            const stockElement = document.getElementById('dash-stock');
-
-            if (isDemo || !supabaseClient) {
-                renderizarTabelaDemo(tableBody, stockElement);
+            if (inventoryItems.length === 0) {
+                emptyState.classList.remove('hidden');
+                recordBadge.textContent = '0 itens';
                 return;
             }
 
-            const { data, error } = await supabaseClient.from('inventario').select('*');
+            emptyState.classList.add('hidden');
+            recordBadge.textContent = `${inventoryItems.length} itens`;
 
-            if (error || !data || data.length === 0) {
-                console.warn("Aviso ao carregar inventário da BD, a carregar dados de demonstração:", error?.message);
-                renderizarTabelaDemo(tableBody, stockElement);
-                return;
-            }
-
-            let html = '';
-            let totalGarrafas = 0;
-            data.forEach(item => {
-                totalGarrafas += Number(item.quantidade || 0);
-                html += `
-                    <tr class="border-b border-white/5">
-                        <td class="py-3 px-4 font-medium">${item.produto}</td>
-                        <td class="py-3 px-4 text-gray-400">${item.lote || 'N/A'}</td>
-                        <td class="py-3 px-4 font-semibold text-emerald-400">${item.quantidade} garrafas</td>
-                        <td class="py-3 px-4">${Number(item.custo).toFixed(2)} €</td>
-                        <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400">Supabase DB</span></td>
-                    </tr>
-                `;
-            });
-            tableBody.innerHTML = html;
-            stockElement.textContent = totalGarrafas.toLocaleString('pt-PT');
-        }
-
-        function renderizarTabelaDemo(tableBody, stockElement) {
-            stockElement.textContent = "4,250";
-            tableBody.innerHTML = `
-                <tr class="border-b border-white/5">
-                    <td class="py-3 px-4 font-medium">Orange Wine Skin-Contact</td>
-                    <td class="py-3 px-4 text-gray-400">2025</td>
-                    <td class="py-3 px-4 font-semibold text-emerald-400">1,800 garrafas</td>
-                    <td class="py-3 px-4">4.20 €</td>
-                    <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-400">Demo ERP</span></td>
-                </tr>
-                <tr class="border-b border-white/5">
-                    <td class="py-3 px-4 font-medium">Bonjardim Tinto Biológico</td>
-                    <td class="py-3 px-4 text-gray-400">2023</td>
-                    <td class="py-3 px-4 font-semibold text-emerald-400">2,450 garrafas</td>
-                    <td class="py-3 px-4">3.80 €</td>
-                    <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-400">Demo ERP</span></td>
-                </tr>
-            `;
-        }
-
-        // Navegação por Abas
-        function switchTab(tabId, evt) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('bg-white/5', 'text-white'));
-            
-            document.getElementById('tab-' + tabId).classList.remove('hidden');
-            if (evt && evt.currentTarget) {
-                evt.currentTarget.classList.add('bg-white/5', 'text-white');
-            }
-            
-            const titles = {
-                dashboard: "Visão Geral",
-                inventory: "Inventário & Mão de Obra",
-                "ai-expansion": "Apoios do Estado & IA",
-                social: "Social Media Hub",
-                tourism: "Enoturismo & Clube de Vinhos"
-            };
-            document.getElementById('current-view-title').textContent = titles[tabId];
-        }
-
-        // Processamento de Excel (SheetJS)
-        function handleExcelUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-                const tableBody = document.getElementById('inventory-table-body');
-                let html = '';
+            inventoryItems.forEach((item) => {
+                const isVoice = item.origem.includes('Voz');
+                const row = document.createElement('tr');
+                row.className = `hover:bg-slate-800/40 transition-colors ${isVoice ? 'bg-purple-950/20' : ''}`;
                 
-                for (const item of jsonData) {
-                    const prod = item.Produto || 'Vinho Importado';
-                    const lote = item.Lote || '2026';
-                    const qtd = Number(item.Quantidade || 100);
-                    const custo = Number(item.Custo || 4.00);
-
-                    if (supabaseClient) {
-                        await supabaseClient.from('inventario').insert([
-                            { produto: prod, lote: lote, quantidade: qtd, custo: custo }
-                        ]).catch(() => {});
-                    }
-
-                    html += `
-                        <tr class="border-b border-white/5">
-                            <td class="py-3 px-4 font-medium">${prod}</td>
-                            <td class="py-3 px-4 text-gray-400">${lote}</td>
-                            <td class="py-3 px-4 font-semibold text-emerald-400">${qtd} garrafas</td>
-                            <td class="py-3 px-4">${custo.toFixed(2)} €</td>
-                            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400">Excel Import</span></td>
-                        </tr>
-                    `;
-                }
-
-                tableBody.insertAdjacentHTML('afterbegin', html);
-                alert(`Sucesso! ${jsonData.length} linhas importadas.`);
-            };
-            reader.readAsArrayBuffer(file);
+                row.innerHTML = `
+                    <td class="py-3.5 px-6 font-medium text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-wine-bottle text-xs ${isVoice ? 'text-purple-400' : 'text-slate-500'}"></i>
+                        <span>${escapeHtml(item.produto)}</span>
+                    </td>
+                    <td class="py-3.5 px-6 text-slate-400 font-mono text-xs">${escapeHtml(item.lote || 'N/A')}</td>
+                    <td class="py-3.5 px-6 font-semibold text-emerald-400">${item.quantidade.toLocaleString('pt-PT')} garrafas</td>
+                    <td class="py-3.5 px-6 text-slate-300">${typeof item.custo === 'number' ? item.custo.toFixed(2) + ' €' : '-'}</td>
+                    <td class="py-3.5 px-6">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${isVoice ? 'bg-purple-500/10 text-purple-300 border border-purple-500/20' : 'bg-slate-800 text-slate-400'}">
+                            ${isVoice ? '🎙️ Voz AI' : '📋 Manual'}
+                        </span>
+                    </td>
+                    <td class="py-3.5 px-6 text-right">
+                        <button onclick="deleteItem(${item.id})" class="text-slate-500 hover:text-rose-400 transition p-1" title="Eliminar Item">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
         }
-// Comandos por Voz (Sem dependências de login para testes)
-        async function triggerVoiceAI() {
-            const speech = prompt("Simule o comando por voz (ex: 'Adicionar 100 garrafas de Orange Wine'):");
-            if (!speech) return;
 
-            // URL da tua Supabase Edge Function
-            const SUPABASE_FUNCTION_URL = "https://odmyqysfnqkzpkpcsbjq.supabase.co/functions/v1/process-voice-inventory";
+        // Recalculate and update dashboard KPIs
+        function updateKPIs() {
+            const totalStock = inventoryItems.reduce((acc, curr) => acc + (Number(curr.quantidade) || 0), 0);
+            const activeBatches = new Set(inventoryItems.map(i => i.lote)).size;
+            const lastVoiceItem = inventoryItems.find(i => i.origem.includes('Voz'));
+
+            document.getElementById('kpi-total-stock').textContent = totalStock.toLocaleString('pt-PT');
+            document.getElementById('kpi-active-batches').textContent = activeBatches;
+            document.getElementById('kpi-last-ingestion').textContent = lastVoiceItem ? lastVoiceItem.produto : 'Nenhum registo';
+        }
+
+        // Voice Modal Controller
+        function openVoiceModal() {
+            const modal = document.getElementById('voice-modal');
+            const container = document.getElementById('modal-container');
+            const statusBox = document.getElementById('modal-status-box');
+            
+            statusBox.className = 'hidden p-3 rounded-lg text-xs font-mono';
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            container.classList.remove('scale-95');
+            container.classList.add('scale-100');
+            
+            document.getElementById('modal-voice-input').focus();
+        }
+
+        function closeVoiceModal() {
+            const modal = document.getElementById('voice-modal');
+            const container = document.getElementById('modal-container');
+            
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            container.classList.remove('scale-100');
+            container.classList.add('scale-95');
+        }
+
+        function setSuggestion(text) {
+            document.getElementById('modal-voice-input').value = text;
+        }
+
+        // Execute Voice Ingestion Logic
+        async function executeVoiceAI() {
+            const speechInput = document.getElementById('modal-voice-input').value.trim();
+            if (!speechInput) {
+                alert("Por favor, introduza ou simule um comando de voz.");
+                return;
+            }
+
+            const submitBtn = document.getElementById('modal-submit-btn');
+            const statusBox = document.getElementById('modal-status-box');
+
+            // UI Loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> <span>Processando...</span>`;
+            statusBox.classList.remove('hidden');
+            statusBox.className = "p-3 rounded-lg text-xs font-mono bg-purple-950/40 border border-purple-800/40 text-purple-300 flex items-center gap-2";
+            statusBox.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-purple-400"></i> A comunicar com Supabase Edge Function...`;
 
             try {
-                // Utiliza diretamente o teu UUID real de teste, eliminando falhas de autenticação
-                const userId = "0503b314-d520-48c0-b5d0-f842bc362438";
-
-                console.log("A enviar comando para a Edge Function...");
-
+                // Fetch direct to Supabase Edge Function
                 const response = await fetch(SUPABASE_FUNCTION_URL, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        comando_texto: speech,
-                        user_id: userId
+                        comando_texto: speechInput,
+                        user_id: FALLBACK_USER_ID
                     })
                 });
 
                 const result = await response.json();
 
-                if (response.ok && result.success) {
-                    // Adiciona a linha visualmente na tabela do ERP
-                    const tableBody = document.getElementById('inventory-table-body');
-                    const row = `
-                        <tr class="border-b border-white/5 bg-purple-500/10">
-                            <td class="py-3 px-4 font-medium">${speech}</td>
-                            <td class="py-3 px-4 text-gray-400">Processado via Edge Function</td>
-                            <td class="py-3 px-4 font-semibold text-emerald-400">Inserido</td>
-                            <td class="py-3 px-4">-</td>
-                            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-purple-500/10 text-purple-300">🎙️ Voz AI</span></td>
-                        </tr>
-                    `;
-                    if (tableBody) {
-                        tableBody.insertAdjacentHTML('afterbegin', row);
+                if (response.ok && (result.success || result.inserted)) {
+                    // Extract inserted data or build clean fallback from response payload
+                    let newItem;
+                    if (result.inserted && Array.isArray(result.inserted) && result.inserted.length > 0) {
+                        const raw = result.inserted[0];
+                        newItem = {
+                            id: Date.now(),
+                            produto: raw.produto || speechInput,
+                            lote: raw.lote || "Lote Voz AI",
+                            quantidade: Number(raw.quantidade) || 100,
+                            custo: Number(raw.custo) || 0.00,
+                            origem: "🎙️ Voz AI"
+                        };
+                    } else {
+                        // Fallback parser if API response returned generic success
+                        newItem = {
+                            id: Date.now(),
+                            produto: speechInput,
+                            lote: "Lote Voz AI",
+                            quantidade: 100,
+                            custo: 0.00,
+                            origem: "🎙️ Voz AI"
+                        };
                     }
-                    alert("Comando processado e registado no Supabase com sucesso!");
+
+                    // Add new item at top of inventory
+                    inventoryItems.unshift(newItem);
+                    renderInventoryTable();
+                    updateKPIs();
+
+                    statusBox.className = "p-3 rounded-lg text-xs font-mono bg-emerald-950/40 border border-emerald-800/40 text-emerald-300";
+                    statusBox.innerHTML = `<i class="fa-solid fa-check-circle"></i> Sucesso: Registado na base de dados do Supabase!`;
+
+                    setTimeout(() => {
+                        closeVoiceModal();
+                        document.getElementById('modal-voice-input').value = '';
+                    }, 1200);
+
                 } else {
-                    console.error("Erro detalhado:", result);
-                    alert("Erro no processamento: " + (result.error || JSON.stringify(result)));
+                    const errorMsg = result.error || JSON.stringify(result);
+                    statusBox.className = "p-3 rounded-lg text-xs font-mono bg-rose-950/40 border border-rose-800/40 text-rose-300";
+                    statusBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Erro: ${escapeHtml(errorMsg)}`;
                 }
+
             } catch (err) {
-                console.error("Erro de rede:", err);
-                alert("Erro de rede ou de ligação à Edge Function: " + err.message);
+                console.error("Network / Server error:", err);
+                statusBox.className = "p-3 rounded-lg text-xs font-mono bg-rose-950/40 border border-rose-800/40 text-rose-300";
+                statusBox.innerHTML = `<i class="fa-solid fa-wifi"></i> Erro de Ligação: ${escapeHtml(err.message)}`;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane text-xs"></i> <span>Processar Comando</span>`;
             }
         }
+
+        // Direct fallback trigger for legacy/external function call requests
+        window.triggerVoiceAI = function() {
+            openVoiceModal();
+        };
+
+        // AIP / Community Support Recommendations Notification
+        function loadAIPRecommendations() {
+            alert("💡 Recomendações AIP / Apoios Comunitários:\n\n1. Candidaturas abertas para Modernização de Adegas (VITIS 2026).\n2. Subvenções de 40% para automação de inventário e eficiência energética.\n3. Certificação de Produção Sustentável disponível.");
+        }
+
+        // Delete Item Helper
+        function deleteItem(id) {
+            inventoryItems = inventoryItems.filter(item => item.id !== id);
+            renderInventoryTable();
+            updateKPIs();
+        }
+
+        // Table Search Filter Helper
+        function filterTable() {
+            const query = document.getElementById('table-search').value.toLowerCase();
+            const rows = document.querySelectorAll('#inventory-table-body tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        // Utility HTML Escaper
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
+        }
+    </script>
+</body>
+</html>
