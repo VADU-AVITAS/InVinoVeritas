@@ -1,18 +1,17 @@
 <!DOCTYPE html>
-<html lang="pt" class="dark">
+<html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VitisOS - ERP para Produtores de Vinho</title>
+    <title>VitisOS - ERP Inteligente para Produtores de Vinho</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        brand: { 50: '#fdf4f5', 500: '#e11d48', 600: '#be123c', 900: '#881337' }
+                        brand: { 50: '#fff1f2', 500: '#e11d48', 600: '#be123c', 900: '#881337' }
                     }
                 }
             }
@@ -21,88 +20,141 @@
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-950 text-gray-100 min-h-screen font-sans selection:bg-brand-500 selection:text-white">
+<body class="bg-slate-50 text-slate-900 min-h-screen font-sans selection:bg-brand-500 selection:text-white">
 
-    <!-- ECRÃ DE LOGIN / BOAS-VINDAS -->
-    <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
-        <div class="max-w-md w-full bg-gray-900 border border-white/10 rounded-2xl p-8 shadow-2xl">
+    <!-- ECRÃ DE AUTENTICAÇÃO / LOGIN (LIGHT MODE) -->
+    <div id="auth-container" class="min-h-screen flex items-center justify-center p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-100 via-slate-50 to-white">
+        <div class="max-w-md w-full bg-white border border-slate-200/80 rounded-3xl p-8 shadow-xl shadow-slate-200/50">
             <div class="text-center mb-8">
-                <span class="text-4xl">🍷</span>
-                <h1 class="text-2xl font-bold mt-2 text-white">VitisOS</h1>
-                <p class="text-sm text-gray-400 mt-1">ERP Inteligente para Produtores de Vinho</p>
+                <div class="inline-flex p-3 bg-brand-50 border border-brand-100 rounded-2xl text-3xl mb-3 shadow-inner">🍷</div>
+                <h1 class="text-2xl font-bold text-slate-900 tracking-tight">VitisOS</h1>
+                <p class="text-sm text-slate-500 mt-1">Plataforma Operacional para Vinícolas</p>
             </div>
             
-            <div class="space-y-4">
-                <button onclick="enterDashboard()" class="w-full py-3 px-4 bg-brand-600 hover:bg-brand-500 text-white font-medium rounded-xl transition duration-200 shadow-lg shadow-brand-600/20 flex items-center justify-center space-x-2">
-                    <span>Entrar no Sistema (Modo Demo)</span>
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">Email</label>
+                    <input type="email" id="email" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white text-sm transition shadow-sm" placeholder="exemplo@vinicola.com">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">Palavra-passe</label>
+                    <input type="password" id="password" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white text-sm transition shadow-sm" placeholder="••••••••">
+                </div>
+                <button type="submit" class="w-full py-3.5 px-4 bg-brand-600 hover:bg-brand-500 text-white font-medium rounded-xl transition duration-200 shadow-lg shadow-brand-600/20">
+                    Entrar na Conta
+                </button>
+            </form>
+
+            <div id="auth-error" class="mt-4 text-xs text-red-600 text-center hidden bg-red-50 border border-red-200 p-2.5 rounded-xl"></div>
+            
+            <div class="mt-6 text-center border-t border-slate-100 pt-6">
+                <button onclick="bypassAuthForTest()" class="text-xs text-brand-600 hover:text-brand-700 font-semibold transition">
+                    ⚡ Entrar Direto em Modo de Teste (Demo)
                 </button>
             </div>
-            <p class="text-xs text-center text-gray-500 mt-6">VitisOS v1.0 • Integrado com Supabase & Groq AI</p>
         </div>
     </div>
 
-    <!-- DASHBOARD PRINCIPAL (Oculto inicialmente até clicar em entrar) -->
+    <!-- DASHBOARD PRINCIPAL (LIGHT MODE) -->
     <div id="dashboard-app" class="hidden min-h-screen flex flex-col">
-        <!-- Header -->
-        <header class="border-b border-white/10 bg-gray-900/50 backdrop-blur sticky top-0 z-50">
+        <!-- Header Superior -->
+        <header class="border-b border-slate-200 bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
             <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <span class="text-2xl">🍷</span>
-                    <span class="font-bold text-lg tracking-tight">VitisOS <span class="text-xs px-2 py-0.5 bg-brand-500/20 text-brand-400 rounded-full border border-brand-500/30">ERP</span></span>
+                    <div class="p-2 bg-brand-50 border border-brand-100 rounded-xl shadow-sm">
+                        <span class="text-xl">🍷</span>
+                    </div>
+                    <div>
+                        <span class="font-bold text-base tracking-tight text-slate-900 block">VitisOS</span>
+                        <span class="text-[10px] text-slate-500 font-medium uppercase tracking-widest block">ERP Multitenant</span>
+                    </div>
                 </div>
+
                 <div class="flex items-center space-x-3">
-                    <button onclick="triggerVoiceAI()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-xl transition flex items-center space-x-2 shadow-lg shadow-purple-600/20">
-                        <span>🎙️ Comando por Voz IA</span>
+                    <span id="user-email-display" class="text-xs text-slate-600 hidden md:inline px-3 py-1 bg-slate-100 rounded-full border border-slate-200"></span>
+                    <button onclick="triggerVoiceAI()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold uppercase tracking-wider rounded-xl transition flex items-center space-x-2 shadow-md shadow-purple-600/20">
+                        <span>🎙️ Comando Voz IA</span>
                     </button>
-                    <button onclick="loadAIPRecommendations()" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm font-medium rounded-xl transition">
-                        📊 Análise IA
+                    <button onclick="loadAIPRecommendations()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-xl transition border border-slate-200">
+                        📊 IA Insights
+                    </button>
+                    <button onclick="logout()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 text-xs rounded-xl transition border border-slate-200" title="Terminar Sessão">
+                        🚪 Sair
                     </button>
                 </div>
             </div>
         </header>
 
-        <!-- Main Content -->
-        <main class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full space-y-6">
-            <!-- KPIs -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-gray-900 border border-white/10 rounded-2xl p-6">
-                    <p class="text-sm text-gray-400">Total em Inventário</p>
-                    <p class="text-3xl font-bold mt-2 text-white">1,450 <span class="text-sm font-normal text-gray-400">garrafas</span></p>
+        <!-- Conteúdo Principal -->
+        <main class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full space-y-8">
+            <!-- Boas-vindas e Ações Rápidas -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white border border-slate-200/80 p-6 rounded-3xl shadow-sm">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">Painel de Controlo Vitivinícola</h2>
+                    <p class="text-sm text-slate-500 mt-0.5">Gestão automatizada de inventário, lotes e apoios comunitários por IA.</p>
                 </div>
-                <div class="bg-gray-900 border border-white/10 rounded-2xl p-6">
-                    <p class="text-sm text-gray-400">Lotes Registados</p>
-                    <p class="text-3xl font-bold mt-2 text-emerald-400">8</p>
-                </div>
-                <div class="bg-gray-900 border border-white/10 rounded-2xl p-6">
-                    <p class="text-sm text-gray-400">Estado da IA</p>
-                    <p class="text-3xl font-bold mt-2 text-purple-400">Ativa ⚡</p>
+                <div class="flex items-center space-x-3">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 animate-pulse"></span> Sistema Online
+                    </span>
                 </div>
             </div>
 
-            <!-- Tabela de Inventário -->
-            <div class="bg-gray-900 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
-                <div class="p-6 border-b border-white/10 flex justify-between items-center">
-                    <h2 class="text-lg font-semibold text-white">Inventário Recente</h2>
-                    <span class="text-xs text-gray-400">Atualizado em tempo real</span>
+            <!-- KPIs Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Inventário Total</p>
+                    <p class="text-2xl font-bold mt-2 text-slate-900">1,750 <span class="text-xs font-normal text-slate-500">garrafas</span></p>
+                    <div class="mt-2 text-xs text-emerald-600 font-medium flex items-center"><span>+12% vs mês anterior</span></div>
+                </div>
+                <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Lotes Ativos</p>
+                    <p class="text-2xl font-bold mt-2 text-emerald-600">9</p>
+                    <div class="mt-2 text-xs text-slate-500"><span>3 em fermentação/estágio</span></div>
+                </div>
+                <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Custo Médio / Un</p>
+                    <p class="text-2xl font-bold mt-2 text-slate-900">4.85 €</p>
+                    <div class="mt-2 text-xs text-slate-500"><span>Otimizado por IA</span></div>
+                </div>
+                <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Motor IA (Groq)</p>
+                    <p class="text-2xl font-bold mt-2 text-purple-600">Llama-3.3</p>
+                    <div class="mt-2 text-xs text-purple-600 font-medium"><span>Edge Function Ativa</span></div>
+                </div>
+            </div>
+
+            <!-- Secção da Tabela de Inventário -->
+            <div class="bg-white border border-slate-200/80 rounded-3xl overflow-hidden shadow-sm">
+                <div class="p-6 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h3 class="text-base font-semibold text-slate-900">Inventário e Registo de Lotes</h3>
+                        <p class="text-xs text-slate-500">Registo automático alimentado por comandos de voz e IA.</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs px-3 py-1 rounded-xl bg-purple-50 text-purple-700 border border-purple-200 font-medium">✨ Sincronizado Supabase</span>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="border-b border-white/10 text-xs text-gray-400 bg-gray-950/50 uppercase tracking-wider">
-                                <th class="py-3 px-4">Produto</th>
-                                <th class="py-3 px-4">Lote</th>
-                                <th class="py-3 px-4">Quantidade</th>
-                                <th class="py-3 px-4">Custo Unitário</th>
-                                <th class="py-3 px-4">Origem</th>
+                            <tr class="border-b border-slate-200 text-xs text-slate-500 bg-slate-50 uppercase tracking-wider font-semibold">
+                                <th class="py-3.5 px-6">Produto / Vinho</th>
+                                <th class="py-3.5 px-6">Lote</th>
+                                <th class="py-3.5 px-6">Quantidade</th>
+                                <th class="py-3.5 px-6">Custo Unitário</th>
+                                <th class="py-3.5 px-6">Origem do Registo</th>
                             </tr>
                         </thead>
-                        <tbody id="inventory-table-body" class="divide-y divide-white/5 text-sm">
-                            <tr class="border-b border-white/5 hover:bg-white/5 transition">
-                                <td class="py-3 px-4 font-medium text-white">Orange Wine Bio</td>
-                                <td class="py-3 px-4 text-gray-400">Lote 2025-A</td>
-                                <td class="py-3 px-4 font-semibold text-emerald-400">300 garrafas</td>
-                                <td class="py-3 px-4 text-gray-300">4.50 €</td>
-                                <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-300">Manual</span></td>
+                        <tbody id="inventory-table-body" class="divide-y divide-slate-100 text-sm">
+                            <tr class="border-b border-slate-100 hover:bg-slate-50/80 transition">
+                                <td class="py-4 px-6 font-medium text-slate-900 flex items-center space-x-2">
+                                    <span>🍷</span><span>Orange Wine Bio</span>
+                                </td>
+                                <td class="py-4 px-6 text-slate-500 font-mono text-xs">Lote 2025-A</td>
+                                <td class="py-4 px-6 font-semibold text-emerald-600">300 garrafas</td>
+                                <td class="py-4 px-6 text-slate-700">4.50 €</td>
+                                <td class="py-4 px-6"><span class="px-2.5 py-1 rounded-full text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">Manual</span></td>
                             </tr>
                         </tbody>
                     </table>
@@ -111,74 +163,24 @@
         </main>
     </div>
 
-    <!-- Scripts de Lógica -->
+    <!-- Scripts de Lógica e Integração -->
     <script>
-        // Função para saltar o login e entrar diretamente no Dashboard
-        function enterDashboard() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('dashboard-app').classList.remove('hidden');
-        }
-
-        // Configuração do Supabase Client (substitui com os teus dados se necessário)
         const SUPABASE_URL = "https://odmyqysfnqkzpkpcsbjq.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // Podes colocar a tua anon key se necessário aqui
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kbXlxeXNmbnFrenBrcGNzYmpxIiwicm9sZSI6ImFub24iLCJpYXQiOjM3NDYwNTkyMDAsImV4cCI6MjAzMTYzOTIwMH0.exemploAnonKeyValida";
         
-        window.supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+        const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+        window.supabaseClient = supabaseClient;
 
-        // Comandos por Voz (Integrado com Supabase Edge Function e Groq)
-        async function triggerVoiceAI() {
-            const speech = prompt("Simule o comando por voz (ex: 'Adicionar 100 garrafas de Orange Wine'):");
-            if (!speech) return;
+        let currentUserId = "0503b314-d520-48c0-b5d0-f842bc362438"; // UUID de teste padrão
 
-            const SUPABASE_FUNCTION_URL = "https://odmyqysfnqkzpkpcsbjq.supabase.co/functions/v1/process-voice-inventory";
-
-            try {
-                // Utiliza o UUID real como fallback seguro
-                const userId = "0503b314-d520-48c0-b5d0-f842bc362438";
-
-                console.log("A enviar comando para a Edge Function...");
-
-                const response = await fetch(SUPABASE_FUNCTION_URL, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        comando_texto: speech,
-                        user_id: userId
-                    })
-                });
-
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    const tableBody = document.getElementById('inventory-table-body');
-                    const row = `
-                        <tr class="border-b border-white/5 bg-purple-500/10 hover:bg-white/5 transition">
-                            <td class="py-3 px-4 font-medium text-white">${speech}</td>
-                            <td class="py-3 px-4 text-gray-400">Processado via IA</td>
-                            <td class="py-3 px-4 font-semibold text-emerald-400">Inserido</td>
-                            <td class="py-3 px-4 text-gray-300">-</td>
-                            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-purple-500/10 text-purple-300">🎙️ Voz AI</span></td>
-                        </tr>
-                    `;
-                    if (tableBody) {
-                        tableBody.insertAdjacentHTML('afterbegin', row);
-                    }
-                    alert("Comando processado e registado no Supabase com sucesso!");
-                } else {
-                    console.error("Erro detalhado:", result);
-                    alert("Erro no processamento: " + (result.error || JSON.stringify(result)));
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (supabaseClient) {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session && session.user) {
+                    activateDashboard(session.user.email, session.user.id);
                 }
-            } catch (err) {
-                console.error("Erro de rede:", err);
-                alert("Erro de rede ou de ligação à Edge Function: " + err.message);
             }
-        }
+        });
 
-        function loadAIPRecommendations() {
-            alert("Análise IA atualizada com base nos programas de apoio comunitário vigentes!");
-        }
-    </script>
-</body>
-</html>
+        async function handleLogin(event) {
+            event
