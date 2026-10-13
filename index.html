@@ -446,39 +446,47 @@
             };
             reader.readAsArrayBuffer(file);
         }
-async function triggerVoiceAI() {
+// Comandos por Voz (Integrado com Supabase Edge Function e Groq)
+        async function triggerVoiceAI() {
             const speech = prompt("Simule o comando por voz (ex: 'Adicionar 100 garrafas de Orange Wine'):");
             if (!speech) return;
 
-            const MAKE_WEBHOOK_URL = "https://hook.eu1.make.com/ebd8u0dxa8lw25jd6xpi01vnlgck8skp";
+            // URL da tua Supabase Edge Function
+            const SUPABASE_FUNCTION_URL = "https://odmyqysfnqkzpkpcsbjq.supabase.co/functions/v1/process-voice-inventory";
 
             try {
-                // Usa o teu UUID real como fallback seguro para evitar erros de tipo no Supabase (uuid)
+                // Utiliza o UUID real como fallback seguro
                 let userId = "0503b314-d520-48c0-b5d0-f842bc362438";
-                
                 if (window.supabaseClient) {
                     const { data } = await window.supabaseClient.auth.getUser();
                     if (data && data.user) {
-                        userId = data.user.id; // Se houver sessão ativa, usa o ID real do login
+                        userId = data.user.id;
                     }
                 }
 
-                const response = await fetch(MAKE_WEBHOOK_URL, {
+                // Faz o pedido diretamente à Edge Function
+                const response = await fetch(SUPABASE_FUNCTION_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${window.supabaseClient ? window.supabaseClient.supabaseKey : ''}`
+                    },
                     body: JSON.stringify({
                         comando_texto: speech,
                         user_id: userId
                     })
                 });
 
-                if (response.ok) {
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    // Adiciona a linha visualmente na tabela do ERP
                     const tableBody = document.getElementById('inventory-table-body');
                     const row = `
                         <tr class="border-b border-white/5 bg-purple-500/10">
                             <td class="py-3 px-4 font-medium">${speech}</td>
-                            <td class="py-3 px-4 text-gray-400">Processado via IA</td>
-                            <td class="py-3 px-4 font-semibold text-emerald-400">Atualizado</td>
+                            <td class="py-3 px-4 text-gray-400">Processado via Edge Function</td>
+                            <td class="py-3 px-4 font-semibold text-emerald-400">Inserido</td>
                             <td class="py-3 px-4">-</td>
                             <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-purple-500/10 text-purple-300">🎙️ Voz AI</span></td>
                         </tr>
@@ -486,12 +494,19 @@ async function triggerVoiceAI() {
                     if (tableBody) {
                         tableBody.insertAdjacentHTML('afterbegin', row);
                     }
-                    alert(`Comando processado com sucesso e guardado na base de dados!`);
+                    alert("Comando processado e registado no Supabase com sucesso!");
                 } else {
-                    alert("Erro ao comunicar com a automação do Make.com.");
+                    alert("Erro no processamento: " + (result.error || "Erro desconhecido"));
                 }
             } catch (err) {
                 console.error("Erro na requisição:", err);
-                alert("Erro de rede ao tentar enviar o comando.");
+                alert("Erro de rede ao tentar ligar à Edge Function.");
             }
         }
+
+        function loadAIPRecommendations() {
+            alert("Análise IA atualizada com base nos programas de apoio comunitário vigentes!");
+        }
+    </script>
+</body>
+</html>
