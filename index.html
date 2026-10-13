@@ -1,472 +1,183 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VitisOS - ERP para Produtores de Vinho</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Supabase JS Client CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
                     colors: {
-                        wine: {
-                            50: '#fdf2f4',
-                            100: '#fce7ea',
-                            500: '#800020',
-                            600: '#66001a',
-                            700: '#4d0013',
-                            900: '#220008',
-                        }
+                        brand: { 50: '#fdf4f5', 500: '#e11d48', 600: '#be123c', 900: '#881337' }
                     }
                 }
             }
         }
     </script>
-    <style>
-        /* Custom scrollbar for dark UI aesthetics */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #111827;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #374151;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #4B5563;
-        }
-    </style>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col">
+<body class="bg-gray-950 text-gray-100 min-h-screen font-sans selection:bg-brand-500 selection:text-white">
 
-    <!-- Top Navigation Header -->
-    <header class="bg-slate-900/80 backdrop-blur border-b border-slate-800 sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-wine-700 via-wine-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-wine-900/50">
-                    <i class="fa-solid fa-wine-glass text-lg"></i>
-                </div>
-                <div>
-                    <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-wine-100 bg-clip-text text-transparent">VitisOS</span>
-                    <span class="text-xs px-2 py-0.5 rounded-full bg-wine-500/20 text-wine-300 font-medium ml-2 border border-wine-500/30">Wine ERP</span>
-                </div>
+    <!-- ECRÃ DE LOGIN / BOAS-VINDAS -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="max-w-md w-full bg-gray-900 border border-white/10 rounded-2xl p-8 shadow-2xl">
+            <div class="text-center mb-8">
+                <span class="text-4xl">🍷</span>
+                <h1 class="text-2xl font-bold mt-2 text-white">VitisOS</h1>
+                <p class="text-sm text-gray-400 mt-1">ERP Inteligente para Produtores de Vinho</p>
             </div>
             
-            <div class="flex items-center gap-3">
-                <button onclick="loadAIPRecommendations()" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-medium border border-slate-700 transition flex items-center gap-2">
-                    <i class="fa-solid fa-lightbulb text-amber-400"></i>
-                    <span class="hidden sm:inline">Programas</span> AIP / Apoios
-                </button>
-                <div class="h-6 w-[1px] bg-slate-800"></div>
-                <div class="flex items-center gap-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg">
-                    <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-                    <span class="text-xs font-mono text-slate-300 hidden md:inline">ID: 0503b314...48c0</span>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Dashboard Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        
-        <!-- Hero Section & Primary Actions -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-slate-900 to-wine-950/40 p-6 rounded-2xl border border-slate-800/80 shadow-2xl">
-            <div>
-                <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Gestão de Inventário de Adega</h1>
-                <p class="text-slate-400 text-sm mt-1">Registo automatizado via comandos de voz processados por Inteligência Artificial (LLM).</p>
-            </div>
-            <div class="flex flex-wrap items-center gap-3">
-                <button id="voice-btn" onclick="openVoiceModal()" class="px-5 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-wine-500 hover:from-purple-500 hover:to-wine-600 text-white font-semibold shadow-lg shadow-purple-900/30 border border-purple-400/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-2 group">
-                    <i class="fa-solid fa-microphone text-purple-200 group-hover:scale-110 transition-transform"></i>
-                    <span>Comando por Voz AI</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- KPI Analytics Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-slate-900/90 border border-slate-800/80 rounded-xl p-5 hover:border-slate-700 transition">
-                <div class="flex items-center justify-between text-slate-400 mb-3">
-                    <span class="text-xs font-medium uppercase tracking-wider">Total em Stock</span>
-                    <i class="fa-solid fa-boxes-stacked text-purple-400"></i>
-                </div>
-                <div id="kpi-total-stock" class="text-2xl font-bold text-white">0</div>
-                <p class="text-xs text-slate-500 mt-1">Garrafas registadas</p>
-            </div>
-
-            <div class="bg-slate-900/90 border border-slate-800/80 rounded-xl p-5 hover:border-slate-700 transition">
-                <div class="flex items-center justify-between text-slate-400 mb-3">
-                    <span class="text-xs font-medium uppercase tracking-wider">Lotes Ativos</span>
-                    <i class="fa-solid fa-wine-bottle text-emerald-400"></i>
-                </div>
-                <div id="kpi-active-batches" class="text-2xl font-bold text-white">0</div>
-                <p class="text-xs text-slate-500 mt-1">Lotes únicos no sistema</p>
-            </div>
-
-            <div class="bg-slate-900/90 border border-slate-800/80 rounded-xl p-5 hover:border-slate-700 transition">
-                <div class="flex items-center justify-between text-slate-400 mb-3">
-                    <span class="text-xs font-medium uppercase tracking-wider">Última Ingestão IA</span>
-                    <i class="fa-solid fa-robot text-purple-400"></i>
-                </div>
-                <div id="kpi-last-ingestion" class="text-lg font-bold text-slate-200 truncate">Sem registos</div>
-                <p class="text-xs text-slate-500 mt-1">Ingestão por voz</p>
-            </div>
-
-            <div class="bg-slate-900/90 border border-slate-800/80 rounded-xl p-5 hover:border-slate-700 transition">
-                <div class="flex items-center justify-between text-slate-400 mb-3">
-                    <span class="text-xs font-medium uppercase tracking-wider">Estado do Sistema</span>
-                    <i class="fa-solid fa-server text-emerald-400"></i>
-                </div>
-                <div class="text-lg font-bold text-emerald-400 flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> Edge Function Active
-                </div>
-                <p class="text-xs text-slate-500 mt-1">Supabase + Groq AI</p>
-            </div>
-        </div>
-
-        <!-- Main Inventory Data Table -->
-        <div class="bg-slate-900/80 rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div class="flex items-center gap-3">
-                    <h2 class="text-lg font-semibold text-white">Tabela de Inventário (`inventario`)</h2>
-                    <span id="record-count-badge" class="px-2 py-0.5 rounded-full text-xs bg-slate-800 text-slate-300 font-mono">0 itens</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="relative flex-1 sm:w-64">
-                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-                        <input type="text" id="table-search" onkeyup="filterTable()" placeholder="Pesquisar produto ou lote..." class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition">
-                    </div>
-                </div>
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse text-sm">
-                    <thead>
-                        <tr class="bg-slate-950/60 border-b border-slate-800 text-xs text-slate-400 uppercase tracking-wider">
-                            <th class="py-3.5 px-6 font-semibold">Produto / Vinho</th>
-                            <th class="py-3.5 px-6 font-semibold">Lote</th>
-                            <th class="py-3.5 px-6 font-semibold">Quantidade</th>
-                            <th class="py-3.5 px-6 font-semibold">Custo Unitário</th>
-                            <th class="py-3.5 px-6 font-semibold">Origem / Método</th>
-                            <th class="py-3.5 px-6 font-semibold text-right">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="inventory-table-body" class="divide-y divide-slate-800/60">
-                        <!-- Dynamic content populated by JS -->
-                    </tbody>
-                </table>
-            </div>
-            
-            <div id="empty-state" class="hidden p-8 text-center text-slate-500">
-                <i class="fa-solid fa-box-open text-3xl mb-2 text-slate-600"></i>
-                <p>Nenhum registo encontrado no inventário.</p>
-            </div>
-        </div>
-    </main>
-
-    <!-- Page Footer -->
-    <footer class="bg-slate-900 border-t border-slate-800 py-6 text-center text-xs text-slate-500 mt-auto">
-        <p>VitisOS &copy; 2026 - ERP para a Indústria Vitivinícola | Powered by Supabase Edge Functions & Groq (Llama-3.3)</p>
-    </footer>
-
-    <!-- Interactive Voice Simulation Modal Overlay -->
-    <div id="voice-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6 transform scale-95 transition-transform duration-200" id="modal-container">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
-                        <i class="fa-solid fa-microphone text-base"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-white text-base">Comando de Voz para Inventário</h3>
-                        <p class="text-xs text-slate-400">Simulação de ingestão via texto por voz</p>
-                    </div>
-                </div>
-                <button onclick="closeVoiceModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-
             <div class="space-y-4">
-                <label class="block text-xs font-medium text-slate-300">
-                    Instrução falada do produtor:
-                </label>
-                <textarea id="modal-voice-input" rows="3" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition resize-none" placeholder="Exemplo: Adicionar 100 garrafas de Orange Wine Lote 2025 custo 4.50"></textarea>
-                
-                <div class="flex flex-wrap gap-2 text-xs">
-                    <span class="text-slate-500 self-center">Sugestões:</span>
-                    <button onclick="setSuggestion('Adicionar 120 garrafas de Orange Wine Lote 2025 custo 4.50')" class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
-                        Orange Wine 120 un.
-                    </button>
-                    <button onclick="setSuggestion('Registar 500 garrafas de Vinho Verde Reserva Lote VV-2026')" class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
-                        Vinho Verde 500 un.
-                    </button>
-                </div>
-            </div>
-
-            <div id="modal-status-box" class="hidden p-3 rounded-lg text-xs font-mono"></div>
-
-            <div class="flex items-center justify-end gap-3 pt-2">
-                <button onclick="closeVoiceModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition">
-                    Cancelar
-                </button>
-                <button id="modal-submit-btn" onclick="executeVoiceAI()" class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium transition flex items-center gap-2">
-                    <i class="fa-solid fa-paper-plane text-xs"></i>
-                    <span>Processar Comando</span>
+                <button onclick="enterDashboard()" class="w-full py-3 px-4 bg-brand-600 hover:bg-brand-500 text-white font-medium rounded-xl transition duration-200 shadow-lg shadow-brand-600/20 flex items-center justify-center space-x-2">
+                    <span>Entrar no Sistema (Modo Demo)</span>
                 </button>
             </div>
+            <p class="text-xs text-center text-gray-500 mt-6">VitisOS v1.0 • Integrado com Supabase & Groq AI</p>
         </div>
     </div>
 
+    <!-- DASHBOARD PRINCIPAL (Oculto inicialmente até clicar em entrar) -->
+    <div id="dashboard-app" class="hidden min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="border-b border-white/10 bg-gray-900/50 backdrop-blur sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span class="text-2xl">🍷</span>
+                    <span class="font-bold text-lg tracking-tight">VitisOS <span class="text-xs px-2 py-0.5 bg-brand-500/20 text-brand-400 rounded-full border border-brand-500/30">ERP</span></span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="triggerVoiceAI()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-xl transition flex items-center space-x-2 shadow-lg shadow-purple-600/20">
+                        <span>🎙️ Comando por Voz IA</span>
+                    </button>
+                    <button onclick="loadAIPRecommendations()" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm font-medium rounded-xl transition">
+                        📊 Análise IA
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full space-y-6">
+            <!-- KPIs -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-gray-900 border border-white/10 rounded-2xl p-6">
+                    <p class="text-sm text-gray-400">Total em Inventário</p>
+                    <p class="text-3xl font-bold mt-2 text-white">1,450 <span class="text-sm font-normal text-gray-400">garrafas</span></p>
+                </div>
+                <div class="bg-gray-900 border border-white/10 rounded-2xl p-6">
+                    <p class="text-sm text-gray-400">Lotes Registados</p>
+                    <p class="text-3xl font-bold mt-2 text-emerald-400">8</p>
+                </div>
+                <div class="bg-gray-900 border border-white/10 rounded-2xl p-6">
+                    <p class="text-sm text-gray-400">Estado da IA</p>
+                    <p class="text-3xl font-bold mt-2 text-purple-400">Ativa ⚡</p>
+                </div>
+            </div>
+
+            <!-- Tabela de Inventário -->
+            <div class="bg-gray-900 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+                <div class="p-6 border-b border-white/10 flex justify-between items-center">
+                    <h2 class="text-lg font-semibold text-white">Inventário Recente</h2>
+                    <span class="text-xs text-gray-400">Atualizado em tempo real</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-white/10 text-xs text-gray-400 bg-gray-950/50 uppercase tracking-wider">
+                                <th class="py-3 px-4">Produto</th>
+                                <th class="py-3 px-4">Lote</th>
+                                <th class="py-3 px-4">Quantidade</th>
+                                <th class="py-3 px-4">Custo Unitário</th>
+                                <th class="py-3 px-4">Origem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-table-body" class="divide-y divide-white/5 text-sm">
+                            <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                                <td class="py-3 px-4 font-medium text-white">Orange Wine Bio</td>
+                                <td class="py-3 px-4 text-gray-400">Lote 2025-A</td>
+                                <td class="py-3 px-4 font-semibold text-emerald-400">300 garrafas</td>
+                                <td class="py-3 px-4 text-gray-300">4.50 €</td>
+                                <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-300">Manual</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts de Lógica -->
     <script>
-        // System Configuration Constants
-        const SUPABASE_FUNCTION_URL = "https://odmyqysfnqkzpkpcsbjq.supabase.co/functions/v1/process-voice-inventory";
-        const FALLBACK_USER_ID = "0503b314-d520-48c0-b5d0-f842bc362438";
-
-        // Initial Seed Mock Inventory Data
-        let inventoryItems = [
-            { id: 1, produto: "Touriga Nacional Reserva", lote: "TN-2023", quantidade: 450, custo: 6.50, origem: "Manual" },
-            { id: 2, produto: "Alvarinho Vinho Verde", lote: "ALV-2024", quantidade: 1200, custo: 3.80, origem: "Manual" },
-            { id: 3, produto: "Syrah Adega Velha", lote: "SY-2022", quantidade: 280, custo: 9.00, origem: "Manual" }
-        ];
-
-        // Safely Initialize Supabase JS Client
-        let supabaseClient = null;
-        try {
-            if (window.supabase) {
-                // Initialize with dummy endpoint fallback if credentials are omitted
-                supabaseClient = window.supabase.createClient('https://odmyqysfnqkzpkpcsbjq.supabase.co', 'public-anon-key');
-            }
-        } catch (e) {
-            console.warn("Supabase Client Init Warning:", e);
+        // Função para saltar o login e entrar diretamente no Dashboard
+        function enterDashboard() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('dashboard-app').classList.remove('hidden');
         }
 
-        // DOM Load Initializer
-        document.addEventListener("DOMContentLoaded", () => {
-            renderInventoryTable();
-            updateKPIs();
-        });
+        // Configuração do Supabase Client (substitui com os teus dados se necessário)
+        const SUPABASE_URL = "https://odmyqysfnqkzpkpcsbjq.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // Podes colocar a tua anon key se necessário aqui
+        
+        window.supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-        // Render Inventory Table Content
-        function renderInventoryTable() {
-            const tbody = document.getElementById('inventory-table-body');
-            const emptyState = document.getElementById('empty-state');
-            const recordBadge = document.getElementById('record-count-badge');
-            
-            tbody.innerHTML = '';
+        // Comandos por Voz (Integrado com Supabase Edge Function e Groq)
+        async function triggerVoiceAI() {
+            const speech = prompt("Simule o comando por voz (ex: 'Adicionar 100 garrafas de Orange Wine'):");
+            if (!speech) return;
 
-            if (inventoryItems.length === 0) {
-                emptyState.classList.remove('hidden');
-                recordBadge.textContent = '0 itens';
-                return;
-            }
-
-            emptyState.classList.add('hidden');
-            recordBadge.textContent = `${inventoryItems.length} itens`;
-
-            inventoryItems.forEach((item) => {
-                const isVoice = item.origem.includes('Voz');
-                const row = document.createElement('tr');
-                row.className = `hover:bg-slate-800/40 transition-colors ${isVoice ? 'bg-purple-950/20' : ''}`;
-                
-                row.innerHTML = `
-                    <td class="py-3.5 px-6 font-medium text-slate-100 flex items-center gap-2">
-                        <i class="fa-solid fa-wine-bottle text-xs ${isVoice ? 'text-purple-400' : 'text-slate-500'}"></i>
-                        <span>${escapeHtml(item.produto)}</span>
-                    </td>
-                    <td class="py-3.5 px-6 text-slate-400 font-mono text-xs">${escapeHtml(item.lote || 'N/A')}</td>
-                    <td class="py-3.5 px-6 font-semibold text-emerald-400">${item.quantidade.toLocaleString('pt-PT')} garrafas</td>
-                    <td class="py-3.5 px-6 text-slate-300">${typeof item.custo === 'number' ? item.custo.toFixed(2) + ' €' : '-'}</td>
-                    <td class="py-3.5 px-6">
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${isVoice ? 'bg-purple-500/10 text-purple-300 border border-purple-500/20' : 'bg-slate-800 text-slate-400'}">
-                            ${isVoice ? '🎙️ Voz AI' : '📋 Manual'}
-                        </span>
-                    </td>
-                    <td class="py-3.5 px-6 text-right">
-                        <button onclick="deleteItem(${item.id})" class="text-slate-500 hover:text-rose-400 transition p-1" title="Eliminar Item">
-                            <i class="fa-solid fa-trash-can text-xs"></i>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        // Recalculate and update dashboard KPIs
-        function updateKPIs() {
-            const totalStock = inventoryItems.reduce((acc, curr) => acc + (Number(curr.quantidade) || 0), 0);
-            const activeBatches = new Set(inventoryItems.map(i => i.lote)).size;
-            const lastVoiceItem = inventoryItems.find(i => i.origem.includes('Voz'));
-
-            document.getElementById('kpi-total-stock').textContent = totalStock.toLocaleString('pt-PT');
-            document.getElementById('kpi-active-batches').textContent = activeBatches;
-            document.getElementById('kpi-last-ingestion').textContent = lastVoiceItem ? lastVoiceItem.produto : 'Nenhum registo';
-        }
-
-        // Voice Modal Controller
-        function openVoiceModal() {
-            const modal = document.getElementById('voice-modal');
-            const container = document.getElementById('modal-container');
-            const statusBox = document.getElementById('modal-status-box');
-            
-            statusBox.className = 'hidden p-3 rounded-lg text-xs font-mono';
-            modal.classList.remove('opacity-0', 'pointer-events-none');
-            container.classList.remove('scale-95');
-            container.classList.add('scale-100');
-            
-            document.getElementById('modal-voice-input').focus();
-        }
-
-        function closeVoiceModal() {
-            const modal = document.getElementById('voice-modal');
-            const container = document.getElementById('modal-container');
-            
-            modal.classList.add('opacity-0', 'pointer-events-none');
-            container.classList.remove('scale-100');
-            container.classList.add('scale-95');
-        }
-
-        function setSuggestion(text) {
-            document.getElementById('modal-voice-input').value = text;
-        }
-
-        // Execute Voice Ingestion Logic
-        async function executeVoiceAI() {
-            const speechInput = document.getElementById('modal-voice-input').value.trim();
-            if (!speechInput) {
-                alert("Por favor, introduza ou simule um comando de voz.");
-                return;
-            }
-
-            const submitBtn = document.getElementById('modal-submit-btn');
-            const statusBox = document.getElementById('modal-status-box');
-
-            // UI Loading state
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> <span>Processando...</span>`;
-            statusBox.classList.remove('hidden');
-            statusBox.className = "p-3 rounded-lg text-xs font-mono bg-purple-950/40 border border-purple-800/40 text-purple-300 flex items-center gap-2";
-            statusBox.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-purple-400"></i> A comunicar com Supabase Edge Function...`;
+            const SUPABASE_FUNCTION_URL = "https://odmyqysfnqkzpkpcsbjq.supabase.co/functions/v1/process-voice-inventory";
 
             try {
-                // Fetch direct to Supabase Edge Function
+                // Utiliza o UUID real como fallback seguro
+                const userId = "0503b314-d520-48c0-b5d0-f842bc362438";
+
+                console.log("A enviar comando para a Edge Function...");
+
                 const response = await fetch(SUPABASE_FUNCTION_URL, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        comando_texto: speechInput,
-                        user_id: FALLBACK_USER_ID
+                        comando_texto: speech,
+                        user_id: userId
                     })
                 });
 
                 const result = await response.json();
 
-                if (response.ok && (result.success || result.inserted)) {
-                    // Extract inserted data or build clean fallback from response payload
-                    let newItem;
-                    if (result.inserted && Array.isArray(result.inserted) && result.inserted.length > 0) {
-                        const raw = result.inserted[0];
-                        newItem = {
-                            id: Date.now(),
-                            produto: raw.produto || speechInput,
-                            lote: raw.lote || "Lote Voz AI",
-                            quantidade: Number(raw.quantidade) || 100,
-                            custo: Number(raw.custo) || 0.00,
-                            origem: "🎙️ Voz AI"
-                        };
-                    } else {
-                        // Fallback parser if API response returned generic success
-                        newItem = {
-                            id: Date.now(),
-                            produto: speechInput,
-                            lote: "Lote Voz AI",
-                            quantidade: 100,
-                            custo: 0.00,
-                            origem: "🎙️ Voz AI"
-                        };
+                if (response.ok && result.success) {
+                    const tableBody = document.getElementById('inventory-table-body');
+                    const row = `
+                        <tr class="border-b border-white/5 bg-purple-500/10 hover:bg-white/5 transition">
+                            <td class="py-3 px-4 font-medium text-white">${speech}</td>
+                            <td class="py-3 px-4 text-gray-400">Processado via IA</td>
+                            <td class="py-3 px-4 font-semibold text-emerald-400">Inserido</td>
+                            <td class="py-3 px-4 text-gray-300">-</td>
+                            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-purple-500/10 text-purple-300">🎙️ Voz AI</span></td>
+                        </tr>
+                    `;
+                    if (tableBody) {
+                        tableBody.insertAdjacentHTML('afterbegin', row);
                     }
-
-                    // Add new item at top of inventory
-                    inventoryItems.unshift(newItem);
-                    renderInventoryTable();
-                    updateKPIs();
-
-                    statusBox.className = "p-3 rounded-lg text-xs font-mono bg-emerald-950/40 border border-emerald-800/40 text-emerald-300";
-                    statusBox.innerHTML = `<i class="fa-solid fa-check-circle"></i> Sucesso: Registado na base de dados do Supabase!`;
-
-                    setTimeout(() => {
-                        closeVoiceModal();
-                        document.getElementById('modal-voice-input').value = '';
-                    }, 1200);
-
+                    alert("Comando processado e registado no Supabase com sucesso!");
                 } else {
-                    const errorMsg = result.error || JSON.stringify(result);
-                    statusBox.className = "p-3 rounded-lg text-xs font-mono bg-rose-950/40 border border-rose-800/40 text-rose-300";
-                    statusBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Erro: ${escapeHtml(errorMsg)}`;
+                    console.error("Erro detalhado:", result);
+                    alert("Erro no processamento: " + (result.error || JSON.stringify(result)));
                 }
-
             } catch (err) {
-                console.error("Network / Server error:", err);
-                statusBox.className = "p-3 rounded-lg text-xs font-mono bg-rose-950/40 border border-rose-800/40 text-rose-300";
-                statusBox.innerHTML = `<i class="fa-solid fa-wifi"></i> Erro de Ligação: ${escapeHtml(err.message)}`;
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane text-xs"></i> <span>Processar Comando</span>`;
+                console.error("Erro de rede:", err);
+                alert("Erro de rede ou de ligação à Edge Function: " + err.message);
             }
         }
 
-        // Direct fallback trigger for legacy/external function call requests
-        window.triggerVoiceAI = function() {
-            openVoiceModal();
-        };
-
-        // AIP / Community Support Recommendations Notification
         function loadAIPRecommendations() {
-            alert("💡 Recomendações AIP / Apoios Comunitários:\n\n1. Candidaturas abertas para Modernização de Adegas (VITIS 2026).\n2. Subvenções de 40% para automação de inventário e eficiência energética.\n3. Certificação de Produção Sustentável disponível.");
-        }
-
-        // Delete Item Helper
-        function deleteItem(id) {
-            inventoryItems = inventoryItems.filter(item => item.id !== id);
-            renderInventoryTable();
-            updateKPIs();
-        }
-
-        // Table Search Filter Helper
-        function filterTable() {
-            const query = document.getElementById('table-search').value.toLowerCase();
-            const rows = document.querySelectorAll('#inventory-table-body tr');
-            
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(query) ? '' : 'none';
-            });
-        }
-
-        // Utility HTML Escaper
-        function escapeHtml(str) {
-            return String(str).replace(/[&<>"']/g, function(m) {
-                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
-            });
+            alert("Análise IA atualizada com base nos programas de apoio comunitário vigentes!");
         }
     </script>
 </body>
